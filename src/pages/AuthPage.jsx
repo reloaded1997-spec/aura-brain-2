@@ -24,6 +24,8 @@ function friendlyError(err) {
     case 'auth/wrong-password':
     case 'auth/user-not-found':
       return 'Wrong email or password.';
+    case 'auth/missing-email':
+      return 'Please enter your email address.';
     case 'auth/invalid-email':
       return 'That email address looks invalid.';
     case 'auth/email-already-in-use':
@@ -38,35 +40,48 @@ function friendlyError(err) {
 }
 
 export default function AuthPage() {
-  const { login, signup } = useAuth();
+  const { login, signup, resetPassword } = useAuth();
   const navigate = useNavigate();
 
-  const [mode, setMode] = useState('login'); // 'login' | 'signup'
+  const [mode, setMode] = useState('login'); // 'login' | 'signup' | 'reset'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [inviteCode, setInviteCode] = useState('');
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState(''); // calm confirmation messages
   const [busy, setBusy] = useState(false);
 
   const isSignup = mode === 'signup';
+  const isReset = mode === 'reset';
+
+  function switchMode(next) {
+    setMode(next);
+    setError('');
+    setNotice('');
+  }
 
   function toggleMode() {
-    setMode((m) => (m === 'login' ? 'signup' : 'login'));
-    setError('');
+    switchMode(isSignup ? 'login' : 'signup');
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
     if (busy) return;
     setError('');
+    setNotice('');
     setBusy(true);
     try {
-      if (isSignup) {
+      if (isReset) {
+        await resetPassword(email.trim());
+        // Generic confirmation — we don't reveal whether the email exists.
+        setNotice('If an account exists for that email, a reset link is on its way.');
+      } else if (isSignup) {
         await signup(email.trim(), password, inviteCode);
+        navigate('/', { replace: true });
       } else {
         await login(email.trim(), password);
+        navigate('/', { replace: true });
       }
-      navigate('/', { replace: true });
     } catch (err) {
       setError(friendlyError(err));
     } finally {
@@ -90,8 +105,18 @@ export default function AuthPage() {
           className="rounded-lg border border-stone-200 bg-white/70 p-8 shadow-sm"
         >
           <h2 className="mb-6 text-center text-xl text-stone-900">
-            {isSignup ? 'Create your account' : 'Welcome back'}
+            {isReset
+              ? 'Reset your password'
+              : isSignup
+                ? 'Create your account'
+                : 'Welcome back'}
           </h2>
+
+          {isReset && (
+            <p className="mb-6 text-center text-sm text-stone-500">
+              Enter your email and we'll send you a link to set a new password.
+            </p>
+          )}
 
           <label className="mb-4 block">
             <span className="mb-1 block text-sm text-stone-600">Email</span>
@@ -105,17 +130,31 @@ export default function AuthPage() {
             />
           </label>
 
-          <label className="mb-4 block">
-            <span className="mb-1 block text-sm text-stone-600">Password</span>
-            <input
-              type="password"
-              autoComplete={isSignup ? 'new-password' : 'current-password'}
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-stone-900 outline-none transition focus:border-stone-500 focus:ring-1 focus:ring-stone-400"
-            />
-          </label>
+          {/* Password is hidden in reset mode */}
+          {!isReset && (
+            <label className="mb-4 block">
+              <span className="mb-1 flex items-baseline justify-between">
+                <span className="text-sm text-stone-600">Password</span>
+                {!isSignup && (
+                  <button
+                    type="button"
+                    onClick={() => switchMode('reset')}
+                    className="text-xs text-stone-500 underline underline-offset-4 transition hover:text-stone-800"
+                  >
+                    Forgot password?
+                  </button>
+                )}
+              </span>
+              <input
+                type="password"
+                autoComplete={isSignup ? 'new-password' : 'current-password'}
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-stone-900 outline-none transition focus:border-stone-500 focus:ring-1 focus:ring-stone-400"
+              />
+            </label>
+          )}
 
           {/* Invite code only in sign-up mode */}
           {isSignup && (
@@ -142,26 +181,57 @@ export default function AuthPage() {
             </p>
           )}
 
+          {/* Confirmation banner */}
+          {notice && (
+            <p
+              role="status"
+              className="mb-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800"
+            >
+              {notice}
+            </p>
+          )}
+
           <button
             type="submit"
             disabled={busy}
             className="flex w-full items-center justify-center gap-2 rounded-md bg-stone-900 px-4 py-2.5 text-white transition hover:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {busy && <Loader2 className="h-4 w-4 animate-spin" />}
-            {busy ? 'Please wait…' : isSignup ? 'Sign Up' : 'Log In'}
+            {busy
+              ? 'Please wait…'
+              : isReset
+                ? 'Send reset link'
+                : isSignup
+                  ? 'Sign Up'
+                  : 'Log In'}
           </button>
         </form>
 
         {/* Mode toggle */}
         <p className="mt-6 text-center text-sm text-stone-500">
-          {isSignup ? 'Already have an account?' : 'Have an invite code?'}{' '}
-          <button
-            type="button"
-            onClick={toggleMode}
-            className="font-medium text-stone-800 underline underline-offset-4 transition hover:text-stone-900"
-          >
-            {isSignup ? 'Log in' : 'Sign up'}
-          </button>
+          {isReset ? (
+            <>
+              Remembered it?{' '}
+              <button
+                type="button"
+                onClick={() => switchMode('login')}
+                className="font-medium text-stone-800 underline underline-offset-4 transition hover:text-stone-900"
+              >
+                Back to log in
+              </button>
+            </>
+          ) : (
+            <>
+              {isSignup ? 'Already have an account?' : 'Have an invite code?'}{' '}
+              <button
+                type="button"
+                onClick={toggleMode}
+                className="font-medium text-stone-800 underline underline-offset-4 transition hover:text-stone-900"
+              >
+                {isSignup ? 'Log in' : 'Sign up'}
+              </button>
+            </>
+          )}
         </p>
       </div>
     </div>

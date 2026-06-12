@@ -11,6 +11,7 @@ import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
   signOut,
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
@@ -39,6 +40,12 @@ export function AuthProvider({ children }) {
   // ----- Logout -------------------------------------------------------------
   function logout() {
     return signOut(auth);
+  }
+
+  // ----- Password reset -----------------------------------------------------
+  // Firebase emails a reset link and hosts the reset page itself.
+  function resetPassword(email) {
+    return sendPasswordResetEmail(auth, email);
   }
 
   // ----- Gated Signup (ARCHITECTURE.md §3C) ---------------------------------
@@ -73,7 +80,7 @@ export function AuthProvider({ children }) {
     return credential;
   }
 
-  const value = { user, loading, login, logout, signup };
+  const value = { user, loading, login, logout, signup, resetPassword };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
