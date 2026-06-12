@@ -10,6 +10,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import ProfileDetail from '../components/ProfileDetail';
+import EditCardModal from '../components/EditCardModal';
 import { BottomNav } from '../components/Navigation';
 import { useData } from '../context/DataContext';
 import { watchRequests, watchLogs, toggleRequest, addRequest } from '../firebase/db';
@@ -27,10 +28,11 @@ function formatLogDate(ts) {
 export default function ProfilePage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { profiles, loading } = useData();
+  const { profiles, groups, loading } = useData();
 
   const [requests, setRequests] = useState([]);
   const [logs, setLogs] = useState([]);
+  const [editing, setEditing] = useState(false);
 
   const profile = useMemo(() => profiles.find((p) => p.id === id) || null, [profiles, id]);
 
@@ -90,6 +92,7 @@ export default function ProfilePage() {
           requests={requests}
           logs={logView}
           onBack={() => navigate(-1)}
+          onEdit={() => setEditing(true)}
           onToggleRequest={(rid) => {
             const r = requests.find((x) => x.id === rid);
             if (r) toggleRequest(id, rid, !r.isCompleted);
@@ -97,6 +100,15 @@ export default function ProfilePage() {
           onAddRequest={(text) => addRequest(id, text)}
         />
       </div>
+      {editing && (
+        <EditCardModal
+          type="person"
+          record={profile}
+          groups={groups}
+          onClose={() => setEditing(false)}
+          onDeleted={() => navigate('/network')}
+        />
+      )}
       <BottomNav active="network" onNavigate={() => navigate('/')} />
     </div>
   );

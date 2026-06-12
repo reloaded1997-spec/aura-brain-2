@@ -11,8 +11,6 @@ import { useNavigate } from 'react-router-dom';
 import JournalCapture from '../components/JournalCapture';
 import { BottomNav } from '../components/Navigation';
 import { useData } from '../context/DataContext';
-import { mockJournalDraft } from '../data/mockData';
-
 export default function JournalPage() {
   const navigate = useNavigate();
   const { addJournalEntry } = useData();
@@ -21,7 +19,6 @@ export default function JournalPage() {
     <div className="flex min-h-screen flex-col bg-[#FAF8F3]">
       <div className="flex-1">
         <JournalCapture
-          draft={mockJournalDraft}
           onCancel={() => navigate('/')}
           onSave={({ text }) => {
             const body = (text || '').trim();

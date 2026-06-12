@@ -13,6 +13,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { MONTHS, daysForMonth } from '../utils/identity';
 
 // Turn raw Firebase/auth errors into calm, human messages.
 function friendlyError(err) {
@@ -47,6 +48,10 @@ export default function AuthPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [inviteCode, setInviteCode] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [birthMonth, setBirthMonth] = useState(''); // '1'..'12'
+  const [birthDay, setBirthDay] = useState(''); // '1'..'31'
   const [error, setError] = useState('');
   const [notice, setNotice] = useState(''); // calm confirmation messages
   const [busy, setBusy] = useState(false);
@@ -76,7 +81,12 @@ export default function AuthPage() {
         // Generic confirmation — we don't reveal whether the email exists.
         setNotice('If an account exists for that email, a reset link is on its way.');
       } else if (isSignup) {
-        await signup(email.trim(), password, inviteCode);
+        await signup(email.trim(), password, inviteCode, {
+          firstName,
+          lastName,
+          birthMonth,
+          birthDay,
+        });
         navigate('/', { replace: true });
       } else {
         await login(email.trim(), password);
@@ -116,6 +126,71 @@ export default function AuthPage() {
             <p className="mb-6 text-center text-sm text-stone-500">
               Enter your email and we'll send you a link to set a new password.
             </p>
+          )}
+
+          {/* Identity — name + birthday, captured at sign-up */}
+          {isSignup && (
+            <>
+              <div className="mb-4 grid grid-cols-2 gap-3">
+                <label className="block">
+                  <span className="mb-1 block text-sm text-stone-600">First name</span>
+                  <input
+                    type="text"
+                    autoComplete="given-name"
+                    required
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    className="w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-stone-900 outline-none transition focus:border-stone-500 focus:ring-1 focus:ring-stone-400"
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-1 block text-sm text-stone-600">Last name</span>
+                  <input
+                    type="text"
+                    autoComplete="family-name"
+                    required
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    className="w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-stone-900 outline-none transition focus:border-stone-500 focus:ring-1 focus:ring-stone-400"
+                  />
+                </label>
+              </div>
+
+              <div className="mb-4">
+                <span className="mb-1 block text-sm text-stone-600">Birthday</span>
+                <div className="grid grid-cols-2 gap-3">
+                  <select
+                    required
+                    value={birthMonth}
+                    onChange={(e) => {
+                      setBirthMonth(e.target.value);
+                      // Trim an out-of-range day if the new month is shorter.
+                      if (birthDay && Number(birthDay) > daysForMonth(e.target.value).length) {
+                        setBirthDay('');
+                      }
+                    }}
+                    className="w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-stone-900 outline-none transition focus:border-stone-500 focus:ring-1 focus:ring-stone-400"
+                  >
+                    <option value="" disabled>Month</option>
+                    {MONTHS.map((m, i) => (
+                      <option key={m} value={i + 1}>{m}</option>
+                    ))}
+                  </select>
+                  <select
+                    required
+                    value={birthDay}
+                    onChange={(e) => setBirthDay(e.target.value)}
+                    className="w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-stone-900 outline-none transition focus:border-stone-500 focus:ring-1 focus:ring-stone-400"
+                  >
+                    <option value="" disabled>Day</option>
+                    {daysForMonth(birthMonth || 1).map((d) => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
+                </div>
+                <p className="mt-1 text-xs text-stone-400">We only ask the day — no year.</p>
+              </div>
+            </>
           )}
 
           <label className="mb-4 block">

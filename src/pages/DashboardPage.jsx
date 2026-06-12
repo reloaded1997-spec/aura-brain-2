@@ -21,6 +21,7 @@ import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import { generateDailyQueue, getTodayLocal } from '../utils/queueMath';
 import { decorateProfile, decorateGroup } from '../utils/display';
+import { initialFor } from '../utils/identity';
 
 function todayEyebrow() {
   const d = new Date();
@@ -29,8 +30,16 @@ function todayEyebrow() {
   return `${weekday} · ${month} ${d.getDate()}`;
 }
 
+// "Good morning" / "Good afternoon" / "Good evening" by local hour.
+function timeOfDayGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good morning';
+  if (h < 18) return 'Good afternoon';
+  return 'Good evening';
+}
+
 export default function DashboardPage() {
-  const { user, logout } = useAuth();
+  const { user, userDoc, logout } = useAuth();
   const { habits, groups, profiles, loading, clearProfile, clearGroup, toggleHabit } = useData();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('queue');
@@ -93,7 +102,8 @@ export default function DashboardPage() {
       <TopHeader
         eyebrow={todayEyebrow()}
         title="Today"
-        initial={(user?.email?.[0] || 'A').toUpperCase()}
+        greeting={userDoc?.firstName ? `${timeOfDayGreeting()}, ${userDoc.firstName}.` : ''}
+        initial={initialFor(userDoc, user?.email)}
         cleared={clearedToday}
         total={total || 0}
       />

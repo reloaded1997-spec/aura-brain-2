@@ -22,6 +22,7 @@ const NAV_ITEMS = [
 export function TopHeader({
   eyebrow = 'Today',
   title = 'Today',
+  greeting = '',
   initial = 'J',
   cleared = 0,
   total = 10,
@@ -38,6 +39,11 @@ export function TopHeader({
           <div className="font-['Newsreader'] text-[34px] leading-[1.05] text-[#1F1D18] mt-[3px]">
             {title}
           </div>
+          {greeting && (
+            <div className="font-['Newsreader'] text-[15px] italic text-[#9A958A] mt-[2px]">
+              {greeting}
+            </div>
+          )}
         </div>
         <div className="w-[38px] h-[38px] rounded-full border border-[#DDD6C8] bg-white flex items-center justify-center font-['Newsreader'] text-[17px] text-[#6F6A60]">
           {initial}

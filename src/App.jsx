@@ -13,11 +13,13 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import ProfileCompletionModal from './components/ProfileCompletionModal';
 import AuthPage from './pages/AuthPage';
 import DashboardPage from './pages/DashboardPage';
 import ProfilePage from './pages/ProfilePage';
 import JournalPage from './pages/JournalPage';
 import NetworkPage from './pages/NetworkPage';
+import { isProfileComplete } from './utils/identity';
 
 // Keep authenticated users out of the auth screen.
 function AuthRoute() {
@@ -34,8 +36,18 @@ function AuthRoute() {
   return user ? <Navigate to="/" replace /> : <AuthPage />;
 }
 
+// Prompt signed-in members whose account doc is missing name/birthday. We wait
+// for the doc to finish loading so the modal never flashes for complete users.
+function ProfileCompletionGate() {
+  const { user, profileLoading, userDoc } = useAuth();
+  if (!user || profileLoading) return null;
+  if (isProfileComplete(userDoc)) return null;
+  return <ProfileCompletionModal />;
+}
+
 export default function App() {
   return (
+    <>
     <Routes>
       <Route path="/auth" element={<AuthRoute />} />
       <Route
@@ -72,5 +84,7 @@ export default function App() {
       />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+      <ProfileCompletionGate />
+    </>
   );
 }

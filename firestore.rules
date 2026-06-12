@@ -37,12 +37,24 @@ service cloud.firestore {
       allow delete: if false; // never allow account-doc deletion from client
     }
 
-    // ----- habits/{habitId} -------------------------------------------------
+    // ----- habits/{habitId} (+ logs subcollection) --------------------------
     match /habits/{habitId} {
       allow read, delete: if ownsExisting();
       allow create: if ownsIncoming();
       // On update, both the stored doc and the incoming doc must stay owned by caller.
       allow update: if ownsExisting() && ownsIncoming();
+
+      // logs subcollection carries no own uid; ownership is transitive through
+      // the parent habit (the routeJournalEntry function appends From-Journal
+      // notes here). Verify against the parent doc, like profiles do.
+      function habitParentOwned() {
+        return isSignedIn() &&
+          get(/databases/$(database)/documents/habits/$(habitId)).data.uid == request.auth.uid;
+      }
+
+      match /logs/{logId} {
+        allow read, write: if habitParentOwned();
+      }
     }
 
     // ----- groups/{groupId} -------------------------------------------------

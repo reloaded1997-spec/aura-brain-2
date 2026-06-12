@@ -19,7 +19,7 @@
 // =============================================================================
 
 import { useState } from 'react';
-import { ChevronLeft, Check, Plus } from 'lucide-react';
+import { ChevronLeft, Check, Plus, Pencil } from 'lucide-react';
 
 export default function ProfileDetail({
   profile,
@@ -28,6 +28,7 @@ export default function ProfileDetail({
   onBack = () => {},
   onToggleRequest = () => {},
   onAddRequest = () => {},
+  onEdit = null,
 }) {
   const [draft, setDraft] = useState('');
   const isGroup = profile?.kind === 'group';
@@ -51,14 +52,26 @@ export default function ProfileDetail({
     <div className="min-h-full bg-[#FAF8F3] pb-8">
       {/* ---- Header ---- */}
       <div className="px-[22px] pt-14 pb-[18px]">
-        <button
-          type="button"
-          onClick={onBack}
-          className="mb-[18px] flex items-center gap-[6px] text-[13px] text-[#9A958A]"
-        >
-          <ChevronLeft className="h-[14px] w-[14px]" strokeWidth={2} />
-          <span>Queue</span>
-        </button>
+        <div className="mb-[18px] flex items-center justify-between">
+          <button
+            type="button"
+            onClick={onBack}
+            className="flex items-center gap-[6px] text-[13px] text-[#9A958A]"
+          >
+            <ChevronLeft className="h-[14px] w-[14px]" strokeWidth={2} />
+            <span>Queue</span>
+          </button>
+          {onEdit && (
+            <button
+              type="button"
+              onClick={onEdit}
+              className="flex items-center gap-[6px] rounded-full border border-[#E2DCD0] bg-white px-[11px] py-[5px] text-[12px] text-[#6F6A60] transition-colors hover:border-[#D8B98E] hover:text-[#A8845C]"
+            >
+              <Pencil className="h-[13px] w-[13px]" strokeWidth={1.8} />
+              Edit
+            </button>
+          )}
+        </div>
 
         <div className="flex items-center gap-[15px]">
           <div

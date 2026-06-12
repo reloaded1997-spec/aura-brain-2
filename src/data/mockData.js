@@ -159,28 +159,6 @@ const profileDetails = {
   },
 };
 
-// ----- Journal capture draft -------------------------------------------------
-// A single in-progress entry the way the design §05 demos it: free text plus
-// the entities Aura "recognized" and the prayer requests it offered to route.
-// In production these detections come from the Cloud Function / Anthropic
-// pipeline (§6); here they're static so the UI is fully demoable offline.
-export const mockJournalDraft = {
-  text:
-    "Caught up with Marcus after Fresno Home Church tonight. He's nervous about " +
-    "Thursday's interview and still feeling the weight of the move. We prayed " +
-    "together — first time he's asked to in a while.",
-  subjectName: 'Marcus',
-  subjectFullName: 'Marcus Bell',
-  detected: [
-    { id: 'd1', text: "Wisdom for Thursday's interview", confirmed: true },
-    { id: 'd2', text: 'Peace about the weight of the move', confirmed: true },
-  ],
-  entities: [
-    { id: 'p_marcus', initial: 'M', name: 'Marcus Bell', kind: 'person' },
-    { id: 'grp_fresno', initial: 'F', name: 'Fresno Home Church', kind: 'group' },
-  ],
-};
-
 // Lookup helper — returns a safe default so the page never renders empty.
 export function getProfileDetail(id) {
   return (
