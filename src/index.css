@@ -1,0 +1,26 @@
+/* ============================================================================
+ * index.css — Tailwind entry + global base
+ * Tailwind v4 single-import. Design type system (ARCHITECTURE.md §2 + handoff):
+ *   - Source Serif 4 — body & interface (global default)
+ *   - Newsreader     — display & titles (applied per-element via font-['Newsreader'])
+ * Palette: paper #FAF8F3, ink #26241F, sage #5F7F67, clay #A8845C.
+ * ========================================================================== */
+
+@import "tailwindcss";
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    /* Book-like serif as the global default; Newsreader layered on for titles. */
+    font-family: "Source Serif 4", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    background-color: #faf8f3; /* paper */
+    color: #26241f; /* ink */
+  }
+}

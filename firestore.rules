@@ -1,0 +1,98 @@
+rules_version = '2';
+
+// =============================================================================
+// Aura Brain 2 — Firestore Security Rules (Phase 1)
+// -----------------------------------------------------------------------------
+// Model: every user-owned document carries a `uid` field. A signed-in user may
+// only read/write documents whose `uid` matches their auth token. Subcollections
+// inherit ownership from their parent profile document.
+//
+// `inviteCodes` is a public-read, no-write collection used by the gated
+// registration flow (client queries it BEFORE createUserWithEmailAndPassword).
+// =============================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ----- Helpers ----------------------------------------------------------
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // The document already in the DB belongs to the caller (read / update / delete).
+    function ownsExisting() {
+      return isSignedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    // The document being written stamps the caller's own uid (create / update).
+    function ownsIncoming() {
+      return isSignedIn() && request.resource.data.uid == request.auth.uid;
+    }
+
+    // ----- users/{uid} ------------------------------------------------------
+    // The doc ID *is* the uid, so match the path segment directly.
+    match /users/{userId} {
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      allow create, update: if isSignedIn() && request.auth.uid == userId;
+      allow delete: if false; // never allow account-doc deletion from client
+    }
+
+    // ----- habits/{habitId} -------------------------------------------------
+    match /habits/{habitId} {
+      allow read, delete: if ownsExisting();
+      allow create: if ownsIncoming();
+      // On update, both the stored doc and the incoming doc must stay owned by caller.
+      allow update: if ownsExisting() && ownsIncoming();
+    }
+
+    // ----- groups/{groupId} -------------------------------------------------
+    match /groups/{groupId} {
+      allow read, delete: if ownsExisting();
+      allow create: if ownsIncoming();
+      allow update: if ownsExisting() && ownsIncoming();
+    }
+
+    // ----- profiles/{profileId} (+ subcollections) --------------------------
+    match /profiles/{profileId} {
+      allow read, delete: if ownsExisting();
+      allow create: if ownsIncoming();
+      allow update: if ownsExisting() && ownsIncoming();
+
+      // requests + logs subcollections do NOT carry their own uid; they are
+      // owned transitively by the parent profile. Verify against the parent doc.
+      function parentOwned() {
+        return isSignedIn() &&
+          get(/databases/$(database)/documents/profiles/$(profileId)).data.uid == request.auth.uid;
+      }
+
+      match /requests/{requestId} {
+        allow read, write: if parentOwned();
+      }
+
+      match /logs/{logId} {
+        allow read, write: if parentOwned();
+      }
+    }
+
+    // ----- journals/{journalId} ---------------------------------------------
+    match /journals/{journalId} {
+      allow read, delete: if ownsExisting();
+      allow create: if ownsIncoming();
+      allow update: if ownsExisting() && ownsIncoming();
+    }
+
+    // ----- inviteCodes/{code} -----------------------------------------------
+    // Read-only for the gated-registration check. No client may create, edit,
+    // or delete codes — those are provisioned server-side / via console only.
+    match /inviteCodes/{code} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // ----- Default deny -----------------------------------------------------
+    // Anything not matched above is rejected.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
