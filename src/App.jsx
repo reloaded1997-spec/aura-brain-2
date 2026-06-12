@@ -19,6 +19,7 @@ import DashboardPage from './pages/DashboardPage';
 import ProfilePage from './pages/ProfilePage';
 import JournalPage from './pages/JournalPage';
 import NetworkPage from './pages/NetworkPage';
+import SearchPage from './pages/SearchPage';
 import { isProfileComplete } from './utils/identity';
 
 // Keep authenticated users out of the auth screen.
@@ -79,6 +80,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <NetworkPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/search"
+        element={
+          <ProtectedRoute>
+            <SearchPage />
           </ProtectedRoute>
         }
       />

@@ -23,7 +23,7 @@ import {
   writeBatch,
 } from 'firebase/firestore';
 import { db } from './config';
-import { getTodayLocal } from '../utils/queueMath';
+import { getTodayLocal, daysBetween } from '../utils/queueMath';
 import { displayName, formatBirthday } from '../utils/identity';
 
 // ----- User account doc (users/{uid}) ---------------------------------------
@@ -194,13 +194,30 @@ export function watchHabitLogs(habitId, cb) {
   return onSnapshot(q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))));
 }
 
-// Toggle today's completion. Checking bumps the streak; unchecking reverts it.
+// Toggle today's completion.
+//   Checking: a PERMANENT habit's streak continues only when the last completion
+//   was yesterday — any gap restarts it at 1 (that's what a streak means). A
+//   TEMPORARY challenge counts total days done toward its target, so it always
+//   increments. We stash the prior values so unchecking can revert exactly.
 export function toggleHabit(habit) {
   const today = getTodayLocal();
   const isDoneToday = habit.lastCompletedDate === today;
+
+  if (isDoneToday) {
+    // Uncheck — restore the exact pre-check state.
+    return updateDoc(doc(db, 'habits', habit.id), {
+      lastCompletedDate: habit.prevCompletedDate ?? null,
+      currentStreak: habit.prevStreak ?? Math.max(0, (habit.currentStreak || 0) - 1),
+    });
+  }
+
+  const gap = habit.lastCompletedDate ? daysBetween(habit.lastCompletedDate, today) : null;
+  const continues = habit.type === 'temporary' || gap === 1;
   return updateDoc(doc(db, 'habits', habit.id), {
-    lastCompletedDate: isDoneToday ? null : today,
-    currentStreak: Math.max(0, (habit.currentStreak || 0) + (isDoneToday ? -1 : 1)),
+    lastCompletedDate: today,
+    currentStreak: continues ? (habit.currentStreak || 0) + 1 : 1,
+    prevCompletedDate: habit.lastCompletedDate ?? null,
+    prevStreak: habit.currentStreak || 0,
   });
 }
 
@@ -236,6 +253,16 @@ function bumpOpenRequests(profileId, delta) {
 }
 
 // ----- Logs subcollection (profiles/{id}/logs) ------------------------------
+// Quick notes typed inline on a queue card (and anywhere else) land here as
+// hand-written relational-log entries, alongside the From-Journal ones.
+export function addLog(profileId, text) {
+  return addDoc(collection(db, 'profiles', profileId, 'logs'), {
+    text,
+    timestamp: serverTimestamp(),
+    fromJournal: false,
+  });
+}
+
 export function watchLogs(profileId, cb) {
   const q = query(collection(db, 'profiles', profileId, 'logs'), orderBy('timestamp', 'desc'));
   return onSnapshot(q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))));

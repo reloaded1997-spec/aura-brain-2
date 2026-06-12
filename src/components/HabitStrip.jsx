@@ -70,16 +70,34 @@ export default function HabitStrip({ habits = [], onCheck = () => {} }) {
         ))}
       </div>
 
-      {/* Time-boxed challenge card(s) */}
+      {/* Time-boxed challenge card(s) — the check circle marks today done */}
       {challenges.map((c) => {
-        const pct = c.targetCount ? Math.round((c.currentStreak / c.targetCount) * 100) : 0;
+        const pct = c.targetCount
+          ? Math.min(100, Math.round((c.currentStreak / c.targetCount) * 100))
+          : 0;
         return (
           <div
             key={c.id}
-            className="mt-[9px] rounded-[13px] border border-[#E6DFD2] bg-white px-3 py-[10px]"
+            className={`mt-[9px] rounded-[13px] border bg-white px-3 py-[10px] transition-all duration-300 ${
+              c.done ? 'border-[#CADBCB]' : 'border-[#E6DFD2]'
+            }`}
           >
-            <div className="flex items-baseline justify-between gap-[10px]">
-              <span className="font-['Newsreader'] text-[14px] text-[#26241F] whitespace-nowrap">
+            <div className="flex items-center gap-[10px]">
+              <button
+                type="button"
+                onClick={() => onCheck(c.id)}
+                aria-label={`Mark ${c.title} done today`}
+                className="flex-shrink-0"
+              >
+                <span
+                  className={`flex h-[18px] w-[18px] items-center justify-center rounded-full ${
+                    c.done ? 'bg-[#5F7F67]' : 'border-[1.5px] border-[#D2CBBC]'
+                  }`}
+                >
+                  {c.done && <Check className="h-[11px] w-[11px] text-white" strokeWidth={3} />}
+                </span>
+              </button>
+              <span className="min-w-0 flex-1 truncate font-['Newsreader'] text-[14px] text-[#26241F]">
                 {c.title}
               </span>
               <span className="text-[10px] font-semibold tracking-[0.8px] text-[#A8845C] uppercase whitespace-nowrap">

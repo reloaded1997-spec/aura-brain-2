@@ -10,7 +10,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserPlus, Users, Sparkles, Pencil } from 'lucide-react';
-import { BottomNav } from '../components/Navigation';
+import { BottomNav, NAV_PATHS } from '../components/Navigation';
 import { PersonForm, GroupForm, HabitForm } from '../components/CardForms';
 import EditCardModal from '../components/EditCardModal';
 import { useData } from '../context/DataContext';
@@ -139,7 +139,7 @@ export default function NetworkPage() {
         />
       )}
 
-      <BottomNav active="network" onNavigate={(key) => navigate(key === 'network' ? '/network' : key === 'journal' ? '/journal' : '/')} />
+      <BottomNav active="network" onNavigate={(key) => navigate(NAV_PATHS[key] || '/')} />
     </div>
   );
 }

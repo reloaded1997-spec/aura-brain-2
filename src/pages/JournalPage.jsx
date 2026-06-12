@@ -9,7 +9,7 @@
 
 import { useNavigate } from 'react-router-dom';
 import JournalCapture from '../components/JournalCapture';
-import { BottomNav } from '../components/Navigation';
+import { BottomNav, NAV_PATHS } from '../components/Navigation';
 import { useData } from '../context/DataContext';
 export default function JournalPage() {
   const navigate = useNavigate();
@@ -26,12 +26,7 @@ export default function JournalPage() {
           }}
         />
       </div>
-      <BottomNav
-        active="journal"
-        onNavigate={(key) =>
-          navigate(key === 'journal' ? '/journal' : key === 'network' ? '/network' : '/')
-        }
-      />
+      <BottomNav active="journal" onNavigate={(key) => navigate(NAV_PATHS[key] || '/')} />
     </div>
   );
 }

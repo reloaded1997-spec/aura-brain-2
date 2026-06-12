@@ -19,6 +19,7 @@ import ProfileCard from '../components/ProfileCard';
 import GroupAccordion from '../components/GroupAccordion';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
+import { addLog } from '../firebase/db';
 import { generateDailyQueue, getTodayLocal } from '../utils/queueMath';
 import { decorateProfile, decorateGroup } from '../utils/display';
 import { initialFor } from '../utils/identity';
@@ -50,6 +51,7 @@ export default function DashboardPage() {
     setActiveTab(key);
     if (key === 'journal') navigate('/journal');
     else if (key === 'network') navigate('/network');
+    else if (key === 'search') navigate('/search');
   };
 
   // --- Habits: derive today's done state from lastCompletedDate -------------
@@ -139,6 +141,7 @@ export default function DashboardPage() {
                   key={item.data.id}
                   profile={item.data}
                   onComplete={clearProfile}
+                  onNote={addLog}
                   onOpen={(pid) => navigate(`/profile/${pid}`)}
                 />
               )

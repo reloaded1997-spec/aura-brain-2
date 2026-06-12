@@ -94,10 +94,12 @@ service cloud.firestore {
     }
 
     // ----- inviteCodes/{code} -----------------------------------------------
-    // Read-only for the gated-registration check. No client may create, edit,
+    // The gated-registration check fetches ONE doc by ID (`get`). Listing is
+    // denied so codes can never be enumerated. No client may create, edit,
     // or delete codes — those are provisioned server-side / via console only.
     match /inviteCodes/{code} {
-      allow read: if true;
+      allow get: if true;
+      allow list: if false;
       allow write: if false;
     }
 

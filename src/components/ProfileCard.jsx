@@ -46,6 +46,7 @@ export default function ProfileCard({
   const [done, setDone] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [note, setNote] = useState('');
+  const [noted, setNoted] = useState(false); // brief "saved" placeholder flash
   const firedRef = useRef(false); // guard onTransitionEnd against multi-fire
 
   const isRequest = profile.kind === 'request';
@@ -83,6 +84,8 @@ export default function ProfileCard({
     if (!text) return;
     onNote(profile.id, text);
     setNote('');
+    setNoted(true);
+    setTimeout(() => setNoted(false), 1800);
   }
 
   return (
@@ -169,7 +172,7 @@ export default function ProfileCard({
                 type="text"
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                placeholder="Quick note…"
+                placeholder={noted ? 'Saved to their log ✓' : 'Quick note…'}
                 className="w-full border-b border-[#EFE9DD] bg-transparent pb-1 text-[12.5px] text-[#3A372F] placeholder:text-[#C3BCAD] focus:border-[#D2CBBC] focus:outline-none"
               />
             </form>

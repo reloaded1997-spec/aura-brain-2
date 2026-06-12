@@ -38,7 +38,9 @@ export function decorateProfile(p) {
     sub: p.descriptor || p.sub || '',
     priorityLabel: p.priorityLabel || priorityLabelFromRate(p.priorityRate),
     cycleLabel: cycleLabelFromRate(p.priorityRate),
-    requestCount: p.openRequestCount ?? p.requestCount ?? 0,
+    // Clamp: the denormalized counter is incremented optimistically and could
+    // drift below zero under racy toggles — never show a negative count.
+    requestCount: Math.max(0, p.openRequestCount ?? p.requestCount ?? 0),
   };
 }
 

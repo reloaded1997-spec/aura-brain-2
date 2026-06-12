@@ -19,6 +19,14 @@ const NAV_ITEMS = [
   { key: 'search', label: 'Search', Icon: Search },
 ];
 
+// One source of truth for tab key -> route, so every page's onNavigate agrees.
+export const NAV_PATHS = {
+  queue: '/',
+  network: '/network',
+  journal: '/journal',
+  search: '/search',
+};
+
 export function TopHeader({
   eyebrow = 'Today',
   title = 'Today',
