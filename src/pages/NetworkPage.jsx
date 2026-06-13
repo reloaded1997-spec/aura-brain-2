@@ -1,51 +1,46 @@
 // =============================================================================
-// pages/NetworkPage.jsx — Network & create forms (Phase 4)
+// pages/NetworkPage.jsx — Circle tab: relationship directory + create forms
 // -----------------------------------------------------------------------------
-// The directory + the way real content gets into Firestore: add people,
-// standalone requests, groups, and habits. Every submit writes through useData()
-// and the live listeners refresh the lists. Tap a person to open their profile,
-// or tap the pencil on any row to edit that card in place (EditCardModal).
+// The relationships hub. Add people, requests, groups, and acquaintances; view
+// and edit existing ones. Every submit writes through useData() and the live
+// listeners refresh the lists. Tap a person to open their profile, or tap the
+// pencil on any row to edit that card in place (EditCardModal).
+//
+// Habits have moved to the Rhythms & Tasks tab (/rhythms).
 // =============================================================================
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UserPlus, Users, Sparkles, Pencil, Contact } from 'lucide-react';
+import { UserPlus, Users, Pencil, Contact } from 'lucide-react';
 import { BottomNav, NAV_PATHS } from '../components/Navigation';
-import { PersonForm, GroupForm, HabitForm, AcquaintanceForm } from '../components/CardForms';
+import { PersonForm, GroupForm, AcquaintanceForm } from '../components/CardForms';
 import EditCardModal from '../components/EditCardModal';
 import { useData } from '../context/DataContext';
 import { priorityLabelFromRate, initialOf } from '../utils/display';
 
 const TABS = [
-  { key: 'person', label: 'Person', Icon: UserPlus },
-  { key: 'group', label: 'Group', Icon: Users },
-  { key: 'habit', label: 'Habit', Icon: Sparkles },
-  { key: 'acquaintance', label: 'Acq.', Icon: Contact },
+  { key: 'person',      label: 'Person',      Icon: UserPlus },
+  { key: 'group',       label: 'Group',        Icon: Users },
+  { key: 'acquaintance', label: 'Acq.',        Icon: Contact },
 ];
-
-function habitSub(h) {
-  if (h.type === 'temporary') return `challenge · ${h.currentStreak || 0}/${h.targetCount || '?'} days`;
-  return `permanent · ${h.currentStreak || 0}d streak`;
-}
 
 export default function NetworkPage() {
   const navigate = useNavigate();
-  const { profiles, groups, habits, acquaintances, addProfile, addGroup, addHabit, addAcquaintance } = useData();
+  const { profiles, groups, acquaintances, addProfile, addGroup, addAcquaintance } = useData();
   const [tab, setTab] = useState('person');
-  // { type: 'person' | 'group' | 'habit', record } | null
   const [editing, setEditing] = useState(null);
 
-  const standalone = profiles.filter((p) => !p.groupId);
+  const people = profiles;
 
   return (
     <div className="flex min-h-screen flex-col bg-[#FAF8F3] text-[#26241F]">
       {/* Header */}
       <div className="px-[22px] pt-14 pb-3">
         <div className="text-[11px] font-semibold uppercase tracking-[1.6px] text-[#9A958A]">
-          Your network
+          Your circle
         </div>
         <div className="mt-[3px] font-['Newsreader'] text-[32px] leading-[1.05] text-[#1F1D18]">
-          People &amp; rhythms
+          People &amp; groups
         </div>
       </div>
 
@@ -70,9 +65,8 @@ export default function NetworkPage() {
         </div>
 
         <div className="rounded-[18px] border border-[#EBE6DC] bg-white p-4 shadow-[0_1px_2px_rgba(40,36,31,0.03)]">
-          {tab === 'person' && <PersonForm groups={groups} onSubmit={addProfile} />}
-          {tab === 'group' && <GroupForm onSubmit={addGroup} />}
-          {tab === 'habit' && <HabitForm onSubmit={addHabit} />}
+          {tab === 'person'      && <PersonForm groups={groups} onSubmit={addProfile} />}
+          {tab === 'group'       && <GroupForm onSubmit={addGroup} />}
           {tab === 'acquaintance' && <AcquaintanceForm profiles={profiles} onSubmit={addAcquaintance} />}
         </div>
 
@@ -94,12 +88,12 @@ export default function NetworkPage() {
 
         {/* Standalone people & requests */}
         <Section title="People & requests">
-          {standalone.length === 0 && (
+          {people.length === 0 && (
             <div className="px-1 py-3 font-['Newsreader'] text-[14px] italic text-[#B6B0A2]">
               No one yet — add your first person above.
             </div>
           )}
-          {standalone.map((p) => (
+          {people.map((p) => (
             <Row
               key={p.id}
               initial={initialOf(p.name)}
@@ -111,22 +105,6 @@ export default function NetworkPage() {
             />
           ))}
         </Section>
-
-        {/* Habits */}
-        {habits.length > 0 && (
-          <Section title="Daily rhythm">
-            {habits.map((h) => (
-              <Row
-                key={h.id}
-                initial={initialOf(h.title)}
-                square
-                name={h.title}
-                sub={habitSub(h)}
-                onEdit={() => setEditing({ type: 'habit', record: h })}
-              />
-            ))}
-          </Section>
-        )}
 
         {/* Acquaintances */}
         {acquaintances.length > 0 && (
@@ -165,7 +143,7 @@ export default function NetworkPage() {
         />
       )}
 
-      <BottomNav active="network" onNavigate={(key) => navigate(NAV_PATHS[key] || '/')} />
+      <BottomNav active="circle" onNavigate={(key) => navigate(NAV_PATHS[key] || '/')} />
     </div>
   );
 }

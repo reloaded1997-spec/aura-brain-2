@@ -1,5 +1,5 @@
 // =============================================================================
-// pages/DashboardPage.jsx — The Daily Queue (Phase 4: live data)
+// pages/DashboardPage.jsx — The Daily Queue
 // -----------------------------------------------------------------------------
 // Now backed by Firestore via useData(). The load balancer (generateDailyQueue,
 // §3B) decides who surfaces; completing a card/group/ habit writes through to
@@ -51,8 +51,8 @@ export default function DashboardPage() {
   const handleNavigate = (key) => {
     setActiveTab(key);
     if (key === 'journal') navigate('/journal');
-    else if (key === 'network') navigate('/network');
-    else if (key === 'acquaintances') navigate('/acquaintances');
+    else if (key === 'circle') navigate('/circle');
+    else if (key === 'rhythms') navigate('/rhythms');
     else if (key === 'search') navigate('/search');
   };
 
@@ -95,7 +95,7 @@ export default function DashboardPage() {
 
   // Progress: cleared-today vs the day's full surfaced set (cleared + due).
   const clearedToday =
-    profiles.filter((p) => !p.groupId && p.lastClearedDate === today).length +
+    profiles.filter((p) => p.lastClearedDate === today).length +
     groups.filter((g) => g.lastClearedDate === today).length +
     acquaintances.filter((a) => a.inQueue === true && a.lastClearedDate === today).length;
   const total = clearedToday + remaining;
@@ -171,7 +171,7 @@ export default function DashboardPage() {
             {remaining === 0 && (
               <div className="my-10 text-center font-['Newsreader'] text-[15px] italic text-[#B6B0A2]">
                 {profiles.length === 0
-                  ? 'No one in your network yet — add someone from the Network tab.'
+                  ? 'No one in your network yet — add someone from the Circle tab.'
                   : 'When the queue is clear, rest.'}
               </div>
             )}

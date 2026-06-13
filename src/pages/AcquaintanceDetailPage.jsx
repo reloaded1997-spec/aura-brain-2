@@ -42,10 +42,10 @@ export default function AcquaintanceDetailPage() {
         <p className="font-['Newsreader'] text-[18px] text-[#6F6A60]">That acquaintance isn't here.</p>
         <button
           type="button"
-          onClick={() => navigate('/acquaintances')}
+          onClick={() => navigate('/circle')}
           className="mt-4 text-[13px] text-[#A8845C] underline underline-offset-4"
         >
-          Back to Acquaintances
+          Back to Circle
         </button>
       </div>
     );
@@ -77,11 +77,11 @@ export default function AcquaintanceDetailPage() {
           record={acq}
           profiles={profiles}
           onClose={() => setEditing(false)}
-          onDeleted={() => navigate('/acquaintances')}
+          onDeleted={() => navigate('/circle')}
         />
       )}
 
-      <BottomNav active="acquaintances" onNavigate={(key) => navigate(NAV_PATHS[key] || '/')} />
+      <BottomNav active="circle" onNavigate={(key) => navigate(NAV_PATHS[key] || '/')} />
     </div>
   );
 }

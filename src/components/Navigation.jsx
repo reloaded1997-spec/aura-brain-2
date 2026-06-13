@@ -1,32 +1,35 @@
 // =============================================================================
-// components/Navigation.jsx — Global header + bottom PWA nav (Phase 3, dumb)
+// components/Navigation.jsx — Global header + bottom PWA nav
 // -----------------------------------------------------------------------------
-// Two sticky chrome pieces (ARCHITECTURE.md §5), both purely presentational:
+// Two sticky chrome pieces, both purely presentational:
 //   <TopHeader>  — sticky top: date eyebrow, "Today" title, user avatar, and a
 //                  load-progress bar.
-//   <BottomNav>  — sticky bottom: Queue · Network · Journal · Search.
+//   <BottomNav>  — sticky bottom: Queue · Circle · Rhythms · Journal · Search.
+//
+// Tabs that have a `labelLong` show the short label on mobile and the long label
+// at md+ so the nav bar stays readable on a phone.
 //
 // No Firebase, no router — everything arrives via props so this stays a dumb
-// component. onNavigate(key) lets a parent wire routing later.
+// component. onNavigate(key) lets a parent wire routing.
 // =============================================================================
 
-import { Inbox, Users, NotebookPen, Search, Contact } from 'lucide-react';
+import { Inbox, Users, NotebookPen, Search, CalendarCheck } from 'lucide-react';
 
 const NAV_ITEMS = [
-  { key: 'queue', label: 'Queue', Icon: Inbox },
-  { key: 'network', label: 'Network', Icon: Users },
-  { key: 'acquaintances', label: 'Circle', Icon: Contact },
+  { key: 'queue',   label: 'Queue',   Icon: Inbox },
+  { key: 'circle',  label: 'Circle',  labelLong: 'Relationship Circles', Icon: Users },
+  { key: 'rhythms', label: 'Rhythms', labelLong: 'Rhythms & Tasks',      Icon: CalendarCheck },
   { key: 'journal', label: 'Journal', Icon: NotebookPen },
-  { key: 'search', label: 'Search', Icon: Search },
+  { key: 'search',  label: 'Search',  Icon: Search },
 ];
 
 // One source of truth for tab key -> route, so every page's onNavigate agrees.
 export const NAV_PATHS = {
-  queue: '/',
-  network: '/network',
-  acquaintances: '/acquaintances',
+  queue:   '/',
+  circle:  '/circle',
+  rhythms: '/rhythms',
   journal: '/journal',
-  search: '/search',
+  search:  '/search',
 };
 
 export function TopHeader({
@@ -80,7 +83,7 @@ export function BottomNav({ active = 'queue', onNavigate = () => {} }) {
   return (
     <nav className="sticky bottom-0 z-20 border-t border-[#EAE3D6] bg-[#FAF8F3]/95 backdrop-blur-sm px-2 pt-2 pb-[max(10px,env(safe-area-inset-bottom))]">
       <ul className="flex items-stretch justify-around">
-        {NAV_ITEMS.map(({ key, label, Icon }) => {
+        {NAV_ITEMS.map(({ key, label, labelLong, Icon }) => {
           const isActive = key === active;
           return (
             <li key={key} className="flex-1">
@@ -96,7 +99,18 @@ export function BottomNav({ active = 'queue', onNavigate = () => {} }) {
                   className="h-[22px] w-[22px]"
                   strokeWidth={isActive ? 2 : 1.6}
                 />
-                <span className="text-[10px] font-semibold tracking-[0.4px]">{label}</span>
+                {labelLong ? (
+                  <>
+                    <span className="text-[10px] font-semibold tracking-[0.4px] md:hidden">
+                      {label}
+                    </span>
+                    <span className="hidden text-[10px] font-semibold tracking-[0.4px] md:block">
+                      {labelLong}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-[10px] font-semibold tracking-[0.4px]">{label}</span>
+                )}
               </button>
             </li>
           );

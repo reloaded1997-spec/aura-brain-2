@@ -69,7 +69,7 @@ export default function ProfilePage() {
   if (!profile) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-[#FAF8F3] px-6 text-center">
-        <p className="font-['Newsreader'] text-[18px] text-[#6F6A60]">That profile isn’t here.</p>
+        <p className="font-['Newsreader'] text-[18px] text-[#6F6A60]">That profile isn't here.</p>
         <button
           type="button"
           onClick={() => navigate('/')}
@@ -125,10 +125,10 @@ export default function ProfilePage() {
           record={profile}
           groups={groups}
           onClose={() => setEditing(false)}
-          onDeleted={() => navigate('/network')}
+          onDeleted={() => navigate('/circle')}
         />
       )}
-      <BottomNav active="network" onNavigate={() => navigate('/')} />
+      <BottomNav active="circle" onNavigate={() => navigate('/')} />
     </div>
   );
 }

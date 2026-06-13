@@ -1,9 +1,12 @@
 // =============================================================================
-// App.jsx — Routing (Phase 2)
+// App.jsx — Routing
 // -----------------------------------------------------------------------------
-//   /        -> DashboardPage, wrapped in <ProtectedRoute> (auth required)
-//   /auth    -> AuthPage (login / gated signup). If already signed in, bounce
-//               to the dashboard so the login screen never shows to a member.
+//   /        -> DashboardPage (auth required)
+//   /auth    -> AuthPage (login / gated signup)
+//   /circle  -> NetworkPage (relationship circles — was /network)
+//   /rhythms -> RhythmsPage (habits & tasks — was /acquaintances)
+//   /network        -> redirect to /circle  (PWA bookmark compatibility)
+//   /acquaintances  -> redirect to /rhythms (PWA bookmark compatibility)
 //   *        -> redirect unknown paths home.
 //
 // BrowserRouter + AuthProvider are mounted one level up in main.jsx.
@@ -20,7 +23,7 @@ import ProfilePage from './pages/ProfilePage';
 import JournalPage from './pages/JournalPage';
 import NetworkPage from './pages/NetworkPage';
 import SearchPage from './pages/SearchPage';
-import AcquaintancesPage from './pages/AcquaintancesPage';
+import RhythmsPage from './pages/AcquaintancesPage';
 import AcquaintanceDetailPage from './pages/AcquaintanceDetailPage';
 import { isProfileComplete } from './utils/identity';
 
@@ -39,8 +42,7 @@ function AuthRoute() {
   return user ? <Navigate to="/" replace /> : <AuthPage />;
 }
 
-// Prompt signed-in members whose account doc is missing name/birthday. We wait
-// for the doc to finish loading so the modal never flashes for complete users.
+// Prompt signed-in members whose account doc is missing name/birthday.
 function ProfileCompletionGate() {
   const { user, profileLoading, userDoc } = useAuth();
   if (!user || profileLoading) return null;
@@ -77,11 +79,34 @@ export default function App() {
           </ProtectedRoute>
         }
       />
+
+      {/* Circle tab — relationship circles (was /network) */}
+      <Route path="/network" element={<Navigate to="/circle" replace />} />
       <Route
-        path="/network"
+        path="/circle"
         element={
           <ProtectedRoute>
             <NetworkPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Rhythms & Tasks tab — habits (was /acquaintances) */}
+      <Route path="/acquaintances" element={<Navigate to="/rhythms" replace />} />
+      <Route
+        path="/rhythms"
+        element={
+          <ProtectedRoute>
+            <RhythmsPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/acquaintance/:id"
+        element={
+          <ProtectedRoute>
+            <AcquaintanceDetailPage />
           </ProtectedRoute>
         }
       />
@@ -90,22 +115,6 @@ export default function App() {
         element={
           <ProtectedRoute>
             <SearchPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/acquaintances"
-        element={
-          <ProtectedRoute>
-            <AcquaintancesPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/acquaintance/:id"
-        element={
-          <ProtectedRoute>
-            <AcquaintanceDetailPage />
           </ProtectedRoute>
         }
       />
