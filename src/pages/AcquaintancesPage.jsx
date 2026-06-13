@@ -4,17 +4,18 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Pencil } from 'lucide-react';
+import { Pencil, UserPlus, Contact } from 'lucide-react';
 import { BottomNav, NAV_PATHS } from '../components/Navigation';
-import { AcquaintanceForm } from '../components/CardForms';
+import { PersonForm, AcquaintanceForm } from '../components/CardForms';
 import EditCardModal from '../components/EditCardModal';
 import { useData } from '../context/DataContext';
 import { initialOf } from '../utils/display';
 
 export default function AcquaintancesPage() {
   const navigate = useNavigate();
-  const { acquaintances, profiles, addAcquaintance } = useData();
+  const { acquaintances, profiles, addAcquaintance, addProfile } = useData();
   const [editing, setEditing] = useState(null);
+  const [formTab, setFormTab] = useState('person');
 
   return (
     <div className="flex min-h-screen flex-col bg-[#FAF8F3] text-[#26241F]">
@@ -29,9 +30,36 @@ export default function AcquaintancesPage() {
       </div>
 
       <main className="flex-1 px-4">
+        {/* Tab selector */}
+        <div className="mb-3 flex gap-1 rounded-xl bg-[#EFEAE0] p-1">
+          {[
+            { key: 'person', label: 'Person', Icon: UserPlus },
+            { key: 'acquaintance', label: 'Acquaintance', Icon: Contact },
+          ].map(({ key, label, Icon }) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setFormTab(key)}
+              className={`flex flex-1 items-center justify-center gap-[6px] rounded-lg py-2 font-['Newsreader'] text-[14px] transition-all ${
+                formTab === key
+                  ? 'border border-[#E6DFD2] bg-white text-[#26241F] shadow-[0_1px_2px_rgba(40,36,31,0.08)]'
+                  : 'border border-transparent text-[#9A958A]'
+              }`}
+            >
+              <Icon className="h-[14px] w-[14px]" strokeWidth={1.8} />
+              {label}
+            </button>
+          ))}
+        </div>
+
         {/* Create form */}
         <div className="rounded-[18px] border border-[#EBE6DC] bg-white p-4 shadow-[0_1px_2px_rgba(40,36,31,0.03)]">
-          <AcquaintanceForm profiles={profiles} onSubmit={addAcquaintance} />
+          {formTab === 'person' && (
+            <PersonForm groups={[]} onSubmit={addProfile} />
+          )}
+          {formTab === 'acquaintance' && (
+            <AcquaintanceForm profiles={profiles} onSubmit={addAcquaintance} />
+          )}
         </div>
 
         {/* List */}
