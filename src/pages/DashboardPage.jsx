@@ -15,6 +15,7 @@ import { useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { TopHeader, BottomNav } from '../components/Navigation';
 import HabitStrip from '../components/HabitStrip';
+import DailyNoteStrip from '../components/DailyNoteStrip';
 import ProfileCard from '../components/ProfileCard';
 import GroupAccordion from '../components/GroupAccordion';
 import { useAuth } from '../context/AuthContext';
@@ -111,6 +112,10 @@ export default function DashboardPage() {
       />
 
       <HabitStrip habits={habitView} onCheck={(id) => toggleHabit(habits.find((h) => h.id === id))} />
+
+      <div className="px-4 pt-3">
+        <DailyNoteStrip uid={user.uid} dateStr={today} />
+      </div>
 
       <main className="flex-1 px-4 pt-4">
         <div className="mb-[11px] flex items-baseline justify-between px-[2px]">

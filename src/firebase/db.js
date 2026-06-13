@@ -12,6 +12,7 @@ import {
   query,
   where,
   orderBy,
+  limit,
   onSnapshot,
   addDoc,
   updateDoc,
@@ -297,4 +298,29 @@ export function addJournalEntry(uid, text) {
     linkedProfileIds: [],
     linkedHabitIds: [],
   });
+}
+
+export function watchJournalEntries(uid, cb) {
+  const q = query(
+    collection(db, 'journals'),
+    where('uid', '==', uid),
+    orderBy('timestamp', 'desc'),
+    limit(30)
+  );
+  return onSnapshot(q, (snap) =>
+    cb(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
+  );
+}
+
+// ----- Daily Notes -----------------------------------------------------------
+// One doc per user per day: ID is `{uid}_{YYYY-MM-DD}`. Composite key means
+// upserts need no query — just getDoc/setDoc by ID.
+export function watchDailyNote(uid, dateStr, cb) {
+  const ref = doc(db, 'dailyNotes', `${uid}_${dateStr}`);
+  return onSnapshot(ref, (snap) => cb(snap.exists() ? (snap.data().text ?? '') : ''));
+}
+
+export function saveDailyNote(uid, dateStr, text) {
+  const ref = doc(db, 'dailyNotes', `${uid}_${dateStr}`);
+  return setDoc(ref, { uid, date: dateStr, text, updatedAt: serverTimestamp() }, { merge: true });
 }

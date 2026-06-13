@@ -21,6 +21,7 @@ export function DataProvider({ children }) {
   const [habits, setHabits] = useState([]);
   const [groups, setGroups] = useState([]);
   const [profiles, setProfiles] = useState([]);
+  const [journals, setJournals] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -28,6 +29,7 @@ export function DataProvider({ children }) {
       setHabits([]);
       setGroups([]);
       setProfiles([]);
+      setJournals([]);
       setLoading(false);
       return undefined;
     }
@@ -45,6 +47,7 @@ export function DataProvider({ children }) {
           setLoading(false); // first real payload in — we're ready
         }
       }),
+      dbApi.watchJournalEntries(user.uid, setJournals),
     ];
 
     return () => unsubs.forEach((u) => u && u());
@@ -71,7 +74,7 @@ export function DataProvider({ children }) {
     [user]
   );
 
-  const value = { habits, groups, profiles, loading, ...actions };
+  const value = { habits, groups, profiles, journals, loading, ...actions };
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
 }

@@ -93,6 +93,15 @@ service cloud.firestore {
       allow update: if ownsExisting() && ownsIncoming();
     }
 
+    // ----- dailyNotes/{noteId} ----------------------------------------------
+    // Doc ID is `{uid}_{YYYY-MM-DD}`. Read/write guarded by uid field on the doc.
+    match /dailyNotes/{noteId} {
+      allow read, write: if request.auth != null
+        && request.auth.uid == resource.data.uid;
+      allow create: if request.auth != null
+        && request.auth.uid == request.resource.data.uid;
+    }
+
     // ----- inviteCodes/{code} -----------------------------------------------
     // The gated-registration check fetches ONE doc by ID (`get`). Listing is
     // denied so codes can never be enumerated. No client may create, edit,
