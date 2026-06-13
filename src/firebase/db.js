@@ -21,6 +21,8 @@ import {
   setDoc,
   serverTimestamp,
   writeBatch,
+  arrayUnion,
+  arrayRemove,
 } from 'firebase/firestore';
 import { db } from './config';
 import { getTodayLocal, daysBetween } from '../utils/queueMath';
@@ -57,6 +59,15 @@ export async function seedStarterProfile(uid, identity = {}) {
     : 'Example card — edit or remove anytime';
 
   return addProfile(uid, { name, descriptor, kind: 'person', priorityRate: 7 });
+}
+
+// ----- FCM token management (users/{uid}.fcmTokens) -------------------------
+export function saveFcmToken(uid, token) {
+  return setDoc(doc(db, 'users', uid), { fcmTokens: arrayUnion(token) }, { merge: true });
+}
+
+export function removeFcmToken(uid, token) {
+  return setDoc(doc(db, 'users', uid), { fcmTokens: arrayRemove(token) }, { merge: true });
 }
 
 // ----- Generic real-time collection watcher ---------------------------------
@@ -107,6 +118,12 @@ export function addProfile(uid, { name, descriptor = '', kind = 'person', priori
 
 export function updateProfile(profileId, patch) {
   return updateDoc(doc(db, 'profiles', profileId), normalizeProfilePatch(patch));
+}
+
+// Dedicated single-field update for freeform notes — intentionally separate
+// from updateProfile so normalizeProfilePatch never touches this field.
+export function updateProfileNotes(profileId, notes) {
+  return updateDoc(doc(db, 'profiles', profileId), { notes: notes ?? '' });
 }
 
 // Delete a profile AND its requests + logs subcollections. Firestore does not

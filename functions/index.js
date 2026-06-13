@@ -20,9 +20,11 @@
 // =============================================================================
 
 const { onDocumentCreated } = require('firebase-functions/v2/firestore');
+const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { defineSecret } = require('firebase-functions/params');
 const { initializeApp } = require('firebase-admin/app');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
+const { getMessaging } = require('firebase-admin/messaging');
 const { GoogleGenAI } = require('@google/genai');
 
 initializeApp();
@@ -225,6 +227,69 @@ async function extractWithGemini(text, habitTitles = [], userName = '') {
   });
   return parseExtraction(response.text);
 }
+
+// --- Queue-aware date diff ---------------------------------------------------
+// Mirrors the client's daysBetween(). Uses local date objects (not UTC epoch
+// subtraction) so DST transitions don't produce off-by-one results.
+function daysDiff(lastClearedDate, todayStr) {
+  if (!lastClearedDate) return Infinity;
+  const [ly, lm, ld] = lastClearedDate.split('-').map(Number);
+  const [ty, tm, td] = todayStr.split('-').map(Number);
+  const last = new Date(ly, lm - 1, ld);
+  const today = new Date(ty, tm - 1, td);
+  return Math.round((today - last) / 86400000);
+}
+
+exports.sendDailyQueueNotifications = onSchedule(
+  { schedule: '0 8 * * *', timeZone: 'America/New_York' },
+  async () => {
+    const today = getTodayLocal();
+    const usersSnap = await db.collection('users').get();
+
+    for (const userDoc of usersSnap.docs) {
+      const tokens = userDoc.data().fcmTokens || [];
+      if (tokens.length === 0) continue;
+
+      const uid = userDoc.id;
+
+      const [profilesSnap, groupsSnap] = await Promise.all([
+        db.collection('profiles').where('uid', '==', uid).get(),
+        db.collection('groups').where('uid', '==', uid).get(),
+      ]);
+
+      const isDue = (item) =>
+        daysDiff(item.lastClearedDate, today) >= (item.priorityRate || 7);
+
+      const dueCount =
+        profilesSnap.docs.filter((d) => isDue(d.data())).length +
+        groupsSnap.docs.filter((d) => isDue(d.data())).length;
+
+      if (dueCount === 0) continue;
+
+      const body =
+        dueCount === 1
+          ? '1 person is waiting in your queue.'
+          : `${dueCount} people are in your queue today.`;
+
+      const response = await getMessaging().sendEachForMulticast({
+        tokens,
+        notification: { title: 'Your queue is ready', body },
+      });
+
+      // Remove any tokens that FCM reports as expired or invalid.
+      const staleTokens = response.responses
+        .map((r, i) => (!r.success ? tokens[i] : null))
+        .filter(Boolean);
+
+      if (staleTokens.length > 0) {
+        await db
+          .collection('users')
+          .doc(uid)
+          .update({ fcmTokens: FieldValue.arrayRemove(...staleTokens) });
+      }
+    }
+  }
+);
 
 exports.routeJournalEntry = onDocumentCreated(
   { document: 'journals/{journalId}', secrets: [geminiApiKey] },

@@ -41,6 +41,9 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,png,svg,ico}'],
+        // FCM uses its own separately-registered SW at /firebase-messaging-sw.js.
+        // Exclude it from Workbox's precache manifest so it stays at a stable URL.
+        globIgnores: ['**/firebase-messaging-sw.js'],
         navigateFallback: '/index.html',
         runtimeCaching: [
           {

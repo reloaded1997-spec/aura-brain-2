@@ -6,14 +6,14 @@
 // and the From-Journal log entries all flow through Firestore.
 // =============================================================================
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import ProfileDetail from '../components/ProfileDetail';
 import EditCardModal from '../components/EditCardModal';
 import { BottomNav } from '../components/Navigation';
 import { useData } from '../context/DataContext';
-import { watchRequests, watchLogs, toggleRequest, addRequest } from '../firebase/db';
+import { watchRequests, watchLogs, toggleRequest, addRequest, updateProfileNotes } from '../firebase/db';
 import { decorateProfile, lastPrayedLabel } from '../utils/display';
 import { getTodayLocal } from '../utils/queueMath';
 
@@ -33,6 +33,17 @@ export default function ProfilePage() {
   const [requests, setRequests] = useState([]);
   const [logs, setLogs] = useState([]);
   const [editing, setEditing] = useState(false);
+
+  const notesTimerRef = useRef(null);
+  const handleNotesChange = useCallback(
+    (newNotes) => {
+      clearTimeout(notesTimerRef.current);
+      notesTimerRef.current = setTimeout(() => {
+        updateProfileNotes(id, newNotes);
+      }, 500);
+    },
+    [id]
+  );
 
   const profile = useMemo(() => profiles.find((p) => p.id === id) || null, [profiles, id]);
 
@@ -91,6 +102,7 @@ export default function ProfilePage() {
           profile={detailProfile}
           requests={requests}
           logs={logView}
+          notes={profile.notes ?? ''}
           onBack={() => navigate(-1)}
           onEdit={() => setEditing(true)}
           onToggleRequest={(rid) => {
@@ -98,6 +110,7 @@ export default function ProfilePage() {
             if (r) toggleRequest(id, rid, !r.isCompleted);
           }}
           onAddRequest={(text) => addRequest(id, text)}
+          onNotesChange={handleNotesChange}
         />
       </div>
       {editing && (

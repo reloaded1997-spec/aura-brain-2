@@ -66,6 +66,7 @@ export function DataProvider({ children }) {
       deleteHabit: dbApi.deleteHabit,
       toggleHabit: dbApi.toggleHabit,
       addJournalEntry: (text) => dbApi.addJournalEntry(user.uid, text),
+      updateProfileNotes: dbApi.updateProfileNotes,
     }),
     [user]
   );

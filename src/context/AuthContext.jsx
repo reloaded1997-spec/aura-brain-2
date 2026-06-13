@@ -6,7 +6,7 @@
 // no Redux, no Zustand).
 // =============================================================================
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
@@ -17,6 +17,7 @@ import {
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../firebase/config';
 import { watchUserDoc, updateUserDoc, seedStarterProfile } from '../firebase/db';
+import { requestNotificationPermission, removeFcmToken } from '../utils/notifications';
 
 const AuthContext = createContext(null);
 
@@ -27,6 +28,11 @@ export function AuthProvider({ children }) {
   // The live users/{uid} account doc (name, birthday, createdAt, settings).
   const [userDoc, setUserDoc] = useState(null);
   const [profileLoading, setProfileLoading] = useState(true);
+
+  // Holds the current FCM token so we can remove it on explicit sign-out.
+  // Lost on page refresh — that's intentional; the Cloud Function cleans up
+  // expired tokens from the server side.
+  const fcmTokenRef = useRef(null);
 
   // ----- Auth state listener ------------------------------------------------
   useEffect(() => {
@@ -55,12 +61,22 @@ export function AuthProvider({ children }) {
   }, [user]);
 
   // ----- Login --------------------------------------------------------------
-  function login(email, password) {
-    return signInWithEmailAndPassword(auth, email, password);
+  async function login(email, password) {
+    const credential = await signInWithEmailAndPassword(auth, email, password);
+    // Fire-and-forget: request permission and persist the token. Non-blocking —
+    // a failure here must never break the sign-in flow.
+    requestNotificationPermission(credential.user.uid)
+      .then(({ token }) => { if (token) fcmTokenRef.current = token; })
+      .catch(() => {});
+    return credential;
   }
 
   // ----- Logout -------------------------------------------------------------
-  function logout() {
+  async function logout() {
+    if (user && fcmTokenRef.current) {
+      await removeFcmToken(user.uid, fcmTokenRef.current).catch(() => {});
+      fcmTokenRef.current = null;
+    }
     return signOut(auth);
   }
 
@@ -113,6 +129,11 @@ export function AuthProvider({ children }) {
     } catch {
       /* non-fatal — they can still add their own people */
     }
+
+    // 5. Request notification permission (fire-and-forget, non-blocking).
+    requestNotificationPermission(uid)
+      .then(({ token }) => { if (token) fcmTokenRef.current = token; })
+      .catch(() => {});
 
     return credential;
   }

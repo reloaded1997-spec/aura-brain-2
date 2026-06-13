@@ -18,19 +18,46 @@
 //   onAddRequest    : (text) => void
 // =============================================================================
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, Check, Plus, Pencil } from 'lucide-react';
 
 export default function ProfileDetail({
   profile,
   requests = [],
   logs = [],
+  notes = '',
   onBack = () => {},
   onToggleRequest = () => {},
   onAddRequest = () => {},
+  onNotesChange = () => {},
   onEdit = null,
 }) {
   const [draft, setDraft] = useState('');
+  const [notesValue, setNotesValue] = useState(notes);
+  const [saved, setSaved] = useState(false);
+  const notesRef = useRef(null);
+
+  // Sync prop → state when the profile changes (navigating between people).
+  useEffect(() => { setNotesValue(notes); }, [notes]);
+
+  // Auto-grow the textarea to fit its content.
+  useEffect(() => {
+    const el = notesRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  }, [notesValue]);
+
+  function handleNotesInput(e) {
+    const val = e.target.value;
+    setNotesValue(val);
+    onNotesChange(val);
+  }
+
+  function handleNotesSaved() {
+    setSaved(true);
+    setTimeout(() => setSaved(false), 1500);
+  }
   const isGroup = profile?.kind === 'group';
   const role = profile?.role || profile?.sub;
 
@@ -102,6 +129,28 @@ export default function ProfileDetail({
             </span>
           )}
         </div>
+      </div>
+
+      {/* ---- Notes ---- */}
+      <div className="px-4 pb-5">
+        <div className="mx-1 mb-[9px] flex items-center gap-2">
+          <span className="text-[10px] font-semibold uppercase tracking-[1.8px] text-[#9A958A]">
+            Notes
+          </span>
+          {saved && (
+            <span className="text-[11px] italic text-[#9A958A]">Saved</span>
+          )}
+        </div>
+        <textarea
+          ref={notesRef}
+          value={notesValue}
+          onChange={handleNotesInput}
+          onBlur={() => {
+            handleNotesSaved();
+          }}
+          placeholder="Add notes about this person…"
+          className="w-full resize-none rounded-[20px] border border-[#EBE6DC] bg-white px-[15px] py-[13px] font-['Newsreader'] text-[15px] text-[#26241F] placeholder:text-[#B0AB9E] focus:border-[#D8B98E] focus:outline-none min-h-[80px]"
+        />
       </div>
 
       {/* ---- Active requests ---- */}
