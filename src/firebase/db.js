@@ -34,8 +34,10 @@ import { displayName, formatBirthday } from '../utils/identity';
 // provisioned at signup; these helpers let the app watch it live and patch it
 // (e.g. when an existing member fills in their details via the prompt).
 export function watchUserDoc(uid, cb) {
-  return onSnapshot(doc(db, 'users', uid), (snap) =>
-    cb(snap.exists() ? { id: snap.id, ...snap.data() } : null)
+  return onSnapshot(
+    doc(db, 'users', uid),
+    (snap) => cb(snap.exists() ? { id: snap.id, ...snap.data() } : null),
+    (err) => console.error('[watchUserDoc] listen failed:', err.code, err.message)
   );
 }
 
@@ -75,7 +77,11 @@ export function removeFcmToken(uid, token) {
 // Returns the unsubscribe fn. cb receives an array of { id, ...data }.
 function watchOwned(name, uid, cb) {
   const q = query(collection(db, name), where('uid', '==', uid));
-  return onSnapshot(q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))));
+  return onSnapshot(
+    q,
+    (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+    (err) => console.error(`[watchOwned:${name}] listen failed:`, err.code, err.message)
+  );
 }
 
 export const watchHabits = (uid, cb) => watchOwned('habits', uid, cb);
@@ -99,6 +105,7 @@ function normalizeHabitPatch(patch) {
   const out = { ...patch };
   if ('targetCount' in out) out.targetCount = out.targetCount ? Number(out.targetCount) : null;
   if ('targetDate' in out) out.targetDate = out.targetDate || null;
+  if ('goalId' in out) out.goalId = out.goalId || null;
   return out;
 }
 
@@ -183,13 +190,14 @@ export function clearGroup(groupId, memberIds = []) {
 }
 
 // ----- Habits ----------------------------------------------------------------
-export function addHabit(uid, { title, type = 'permanent', targetCount = null, targetDate = null }) {
+export function addHabit(uid, { title, type = 'permanent', targetCount = null, targetDate = null, goalId = null }) {
   return addDoc(collection(db, 'habits'), {
     uid,
     title,
     type,
     targetCount: targetCount ? Number(targetCount) : null,
     targetDate: targetDate || null,
+    goalId: goalId || null,
     currentStreak: 0,
     lastCompletedDate: null,
     status: 'active',
@@ -209,7 +217,11 @@ export function deleteHabit(habitId) {
 // routeJournalEntry Cloud Function. Mirrors watchLogs for profiles.
 export function watchHabitLogs(habitId, cb) {
   const q = query(collection(db, 'habits', habitId, 'logs'), orderBy('timestamp', 'desc'));
-  return onSnapshot(q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))));
+  return onSnapshot(
+    q,
+    (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+    (err) => console.error('[watchHabitLogs] listen failed:', err.code, err.message)
+  );
 }
 
 // Toggle today's completion.
@@ -242,7 +254,11 @@ export function toggleHabit(habit) {
 // ----- Requests subcollection (profiles/{id}/requests) ----------------------
 export function watchRequests(profileId, cb) {
   const q = query(collection(db, 'profiles', profileId, 'requests'), orderBy('createdAt', 'asc'));
-  return onSnapshot(q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))));
+  return onSnapshot(
+    q,
+    (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+    (err) => console.error('[watchRequests] listen failed:', err.code, err.message)
+  );
 }
 
 export async function addRequest(profileId, text) {
@@ -283,7 +299,11 @@ export function addLog(profileId, text) {
 
 export function watchLogs(profileId, cb) {
   const q = query(collection(db, 'profiles', profileId, 'logs'), orderBy('timestamp', 'desc'));
-  return onSnapshot(q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))));
+  return onSnapshot(
+    q,
+    (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+    (err) => console.error('[watchLogs] listen failed:', err.code, err.message)
+  );
 }
 
 // ----- Acquaintances ---------------------------------------------------------
@@ -328,7 +348,11 @@ export async function deleteAcquaintance(acqId) {
 
 export function watchUpdates(acqId, cb) {
   const q = query(collection(db, 'acquaintances', acqId, 'updates'), orderBy('timestamp', 'desc'));
-  return onSnapshot(q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))));
+  return onSnapshot(
+    q,
+    (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+    (err) => console.error('[watchUpdates] listen failed:', err.code, err.message)
+  );
 }
 
 export function addUpdate(acqId, text) {
@@ -336,6 +360,35 @@ export function addUpdate(acqId, text) {
     text,
     timestamp: serverTimestamp(),
   });
+}
+
+// ----- Goals -----------------------------------------------------------------
+export const watchGoals = (uid, cb) => watchOwned('goals', uid, cb);
+
+function normalizeGoalPatch(patch) {
+  const out = { ...patch };
+  if ('targetDate' in out) out.targetDate = out.targetDate || null;
+  return out;
+}
+
+export function addGoal(uid, { title, description = '', status = 'active', targetDate = null }) {
+  return addDoc(collection(db, 'goals'), {
+    uid,
+    title,
+    description,
+    status,
+    targetDate: targetDate || null,
+    color: null, // reserved for future use
+    createdAt: serverTimestamp(),
+  });
+}
+
+export function updateGoal(goalId, patch) {
+  return updateDoc(doc(db, 'goals', goalId), normalizeGoalPatch(patch));
+}
+
+export function deleteGoal(goalId) {
+  return deleteDoc(doc(db, 'goals', goalId));
 }
 
 // ----- Journals --------------------------------------------------------------
@@ -359,8 +412,10 @@ export function watchJournalEntries(uid, cb) {
     orderBy('timestamp', 'desc'),
     limit(30)
   );
-  return onSnapshot(q, (snap) =>
-    cb(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
+  return onSnapshot(
+    q,
+    (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+    (err) => console.error('[watchJournalEntries] listen failed:', err.code, err.message)
   );
 }
 
@@ -369,7 +424,11 @@ export function watchJournalEntries(uid, cb) {
 // upserts need no query — just getDoc/setDoc by ID.
 export function watchDailyNote(uid, dateStr, cb) {
   const ref = doc(db, 'dailyNotes', `${uid}_${dateStr}`);
-  return onSnapshot(ref, (snap) => cb(snap.exists() ? (snap.data().text ?? '') : ''));
+  return onSnapshot(
+    ref,
+    (snap) => cb(snap.exists() ? (snap.data().text ?? '') : ''),
+    (err) => console.error('[watchDailyNote] listen failed:', err.code, err.message)
+  );
 }
 
 export function saveDailyNote(uid, dateStr, text) {

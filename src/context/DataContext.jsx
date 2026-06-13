@@ -1,9 +1,9 @@
 // =============================================================================
-// context/DataContext.jsx — Live Firestore data + actions (Phase 4)
+// context/DataContext.jsx — Live Firestore data + actions
 // -----------------------------------------------------------------------------
-// Subscribes (onSnapshot) to the signed-in user's habits, groups, and profiles
-// and exposes them — plus write actions — through the useData() hook. State is
-// React Context + a custom hook (no Redux/Zustand, per §2).
+// Subscribes (onSnapshot) to the signed-in user's habits, groups, profiles,
+// goals, and acquaintances and exposes them — plus write actions — through the
+// useData() hook. State is React Context + a custom hook (no Redux/Zustand).
 //
 // Subcollection reads (requests/logs) are subscribed per-screen, not here, to
 // avoid fanning out listeners across every profile at once.
@@ -23,6 +23,7 @@ export function DataProvider({ children }) {
   const [profiles, setProfiles] = useState([]);
   const [journals, setJournals] = useState([]);
   const [acquaintances, setAcquaintances] = useState([]);
+  const [goals, setGoals] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -32,6 +33,7 @@ export function DataProvider({ children }) {
       setProfiles([]);
       setJournals([]);
       setAcquaintances([]);
+      setGoals([]);
       setLoading(false);
       return undefined;
     }
@@ -51,6 +53,7 @@ export function DataProvider({ children }) {
       }),
       dbApi.watchJournalEntries(user.uid, setJournals),
       dbApi.watchAcquaintances(user.uid, setAcquaintances),
+      dbApi.watchGoals(user.uid, setGoals),
     ];
 
     return () => unsubs.forEach((u) => u && u());
@@ -71,6 +74,9 @@ export function DataProvider({ children }) {
       updateHabit: dbApi.updateHabit,
       deleteHabit: dbApi.deleteHabit,
       toggleHabit: dbApi.toggleHabit,
+      addGoal: (data) => dbApi.addGoal(user.uid, data),
+      updateGoal: dbApi.updateGoal,
+      deleteGoal: dbApi.deleteGoal,
       addJournalEntry: (text) => dbApi.addJournalEntry(user.uid, text),
       updateProfileNotes: dbApi.updateProfileNotes,
       addAcquaintance: (data) => dbApi.addAcquaintance(user.uid, data),
@@ -81,7 +87,7 @@ export function DataProvider({ children }) {
     [user]
   );
 
-  const value = { habits, groups, profiles, journals, acquaintances, loading, ...actions };
+  const value = { habits, groups, profiles, journals, acquaintances, goals, loading, ...actions };
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
 }

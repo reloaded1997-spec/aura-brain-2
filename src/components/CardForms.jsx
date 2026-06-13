@@ -54,15 +54,22 @@ export function PersonForm({ groups = [], mode = 'create', initial = null, onSub
   const [kind, setKind] = useState(initial?.kind || 'person');
   const [priorityRate, setPriorityRate] = useState(initial?.priorityRate || 7);
   const [groupId, setGroupId] = useState(initial?.groupId || '');
+  const [submitError, setSubmitError] = useState(null);
 
-  function submit(e) {
+  async function submit(e) {
     e.preventDefault();
     if (!name.trim()) return;
-    onSubmit({ name: name.trim(), descriptor: descriptor.trim(), kind, priorityRate, groupId: groupId || null });
-    if (mode === 'create') {
-      setName('');
-      setDescriptor('');
-      setGroupId('');
+    setSubmitError(null);
+    try {
+      await onSubmit({ name: name.trim(), descriptor: descriptor.trim(), kind, priorityRate, groupId: groupId || null });
+      if (mode === 'create') {
+        setName('');
+        setDescriptor('');
+        setGroupId('');
+      }
+    } catch (err) {
+      console.error('[PersonForm] submit failed:', err.code, err.message);
+      setSubmitError(err.message || 'Failed to save. Please try again.');
     }
   }
 
@@ -101,6 +108,9 @@ export function PersonForm({ groups = [], mode = 'create', initial = null, onSub
             ))}
           </select>
         </div>
+      )}
+      {submitError && (
+        <p className="text-[13px]" style={{ color: '#B4502F' }}>{submitError}</p>
       )}
       <SubmitButton mode={mode}>{submitLabel || (mode === 'create' ? 'Add to network' : 'Save changes')}</SubmitButton>
     </form>
@@ -149,6 +159,7 @@ export function AcquaintanceForm({ profiles = [], mode = 'create', initial = nul
   const [inQueue, setInQueue] = useState(initial?.inQueue ?? false);
   const [priorityRate, setPriorityRate] = useState(initial?.priorityRate || 7);
   const [linkedProfileIds, setLinkedProfileIds] = useState(initial?.linkedProfileIds || []);
+  const [submitError, setSubmitError] = useState(null);
 
   const people = profiles.filter((p) => !p.kind || p.kind === 'person');
 
@@ -158,16 +169,22 @@ export function AcquaintanceForm({ profiles = [], mode = 'create', initial = nul
     );
   }
 
-  function submit(e) {
+  async function submit(e) {
     e.preventDefault();
     if (!name.trim()) return;
-    onSubmit({ name: name.trim(), descriptor: descriptor.trim(), inQueue, priorityRate, linkedProfileIds });
-    if (mode === 'create') {
-      setName('');
-      setDescriptor('');
-      setInQueue(false);
-      setPriorityRate(7);
-      setLinkedProfileIds([]);
+    setSubmitError(null);
+    try {
+      await onSubmit({ name: name.trim(), descriptor: descriptor.trim(), inQueue, priorityRate, linkedProfileIds });
+      if (mode === 'create') {
+        setName('');
+        setDescriptor('');
+        setInQueue(false);
+        setPriorityRate(7);
+        setLinkedProfileIds([]);
+      }
+    } catch (err) {
+      console.error('[AcquaintanceForm] submit failed:', err.code, err.message);
+      setSubmitError(err.message || 'Failed to save. Please try again.');
     }
   }
 
@@ -219,26 +236,39 @@ export function AcquaintanceForm({ profiles = [], mode = 'create', initial = nul
           </div>
         </div>
       )}
+      {submitError && (
+        <p className="text-[13px]" style={{ color: '#B4502F' }}>{submitError}</p>
+      )}
       <SubmitButton mode={mode}>{submitLabel || (mode === 'create' ? 'Add acquaintance' : 'Save changes')}</SubmitButton>
     </form>
   );
 }
 
 // ---- Habit ------------------------------------------------------------------
-export function HabitForm({ mode = 'create', initial = null, onSubmit, submitLabel }) {
+// goals: optional array of goal docs. When non-empty, a goal selector is shown
+// so the habit can be linked to a parent goal from either create or edit mode.
+export function HabitForm({ mode = 'create', initial = null, goals = [], onSubmit, submitLabel }) {
   const [title, setTitle] = useState(initial?.title || '');
   const [type, setType] = useState(initial?.type || 'permanent');
   const [targetCount, setTargetCount] = useState(initial?.targetCount || 28);
+  const [goalId, setGoalId] = useState(initial?.goalId || '');
+
+  const activeGoals = goals.filter((g) => g.status === 'active');
 
   function submit(e) {
     e.preventDefault();
     if (!title.trim()) return;
-    onSubmit({
+    const payload = {
       title: title.trim(),
       type,
       targetCount: type === 'temporary' ? targetCount : null,
-    });
-    if (mode === 'create') setTitle('');
+    };
+    if (goals.length > 0) payload.goalId = goalId || null;
+    onSubmit(payload);
+    if (mode === 'create') {
+      setTitle('');
+      setGoalId('');
+    }
   }
 
   return (
@@ -268,6 +298,17 @@ export function HabitForm({ mode = 'create', initial = null, onSubmit, submitLab
           </div>
         )}
       </div>
+      {activeGoals.length > 0 && (
+        <div>
+          <label className={labelCls}>Goal (optional)</label>
+          <select className={fieldCls} value={goalId} onChange={(e) => setGoalId(e.target.value)}>
+            <option value="">— no goal —</option>
+            {activeGoals.map((g) => (
+              <option key={g.id} value={g.id}>{g.title}</option>
+            ))}
+          </select>
+        </div>
+      )}
       <SubmitButton mode={mode}>{submitLabel || (mode === 'create' ? 'Add habit' : 'Save changes')}</SubmitButton>
     </form>
   );

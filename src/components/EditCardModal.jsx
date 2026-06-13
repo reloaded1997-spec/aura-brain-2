@@ -35,7 +35,7 @@ export default function EditCardModal({
   onClose = () => {},
   onDeleted = () => {},
 }) {
-  const { updateProfile, updateGroup, updateHabit, deleteProfile, deleteGroup, deleteHabit, updateAcquaintance, deleteAcquaintance } = useData();
+  const { updateProfile, updateGroup, updateHabit, deleteProfile, deleteGroup, deleteHabit, updateAcquaintance, deleteAcquaintance, goals } = useData();
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -143,7 +143,7 @@ export default function EditCardModal({
               <PersonForm mode="edit" initial={record} groups={groups} onSubmit={handleSubmit} />
             )}
             {type === 'group' && <GroupForm mode="edit" initial={record} onSubmit={handleSubmit} />}
-            {type === 'habit' && <HabitForm mode="edit" initial={record} onSubmit={handleSubmit} />}
+            {type === 'habit' && <HabitForm mode="edit" initial={record} goals={goals} onSubmit={handleSubmit} />}
             {type === 'acquaintance' && (
               <AcquaintanceForm mode="edit" initial={record} profiles={profiles} onSubmit={handleSubmit} />
             )}

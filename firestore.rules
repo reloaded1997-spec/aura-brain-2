@@ -110,12 +110,18 @@ service cloud.firestore {
     }
 
     // ----- dailyNotes/{noteId} ----------------------------------------------
-    // Doc ID is `{uid}_{YYYY-MM-DD}`. Read/write guarded by uid field on the doc.
+    // Doc ID is `{uid}_{YYYY-MM-DD}`. Read guards with resource == null check
+    // because onSnapshot fires on a non-existent doc (new day) before any note
+    // is written — resource is null at that point and resource.data would crash.
     match /dailyNotes/{noteId} {
-      allow read, write: if request.auth != null
-        && request.auth.uid == resource.data.uid;
+      allow read: if request.auth != null
+        && (resource == null || request.auth.uid == resource.data.uid);
       allow create: if request.auth != null
         && request.auth.uid == request.resource.data.uid;
+      allow update: if request.auth != null
+        && request.auth.uid == resource.data.uid
+        && request.auth.uid == request.resource.data.uid;
+      allow delete: if false;
     }
 
     // ----- inviteCodes/{code} -----------------------------------------------
@@ -126,6 +132,13 @@ service cloud.firestore {
       allow get: if true;
       allow list: if false;
       allow write: if false;
+    }
+
+    // ----- goals/{goalId} --------------------------------------------------
+    match /goals/{goalId} {
+      allow read, delete: if ownsExisting();
+      allow create:       if ownsIncoming();
+      allow update:       if ownsExisting() && ownsIncoming();
     }
 
     // ----- Default deny -----------------------------------------------------
