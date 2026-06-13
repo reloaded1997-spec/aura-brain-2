@@ -136,12 +136,9 @@ export function generateDailyQueue(profiles = [], groups = [], todayStr = getTod
     });
   }
 
-  // --- Standalone profiles ------------------------------------------------
+  // --- Profiles (all, including grouped) ----------------------------------
   const dueProfiles = [];
   for (const profile of profiles) {
-    // Grouped profiles are surfaced via their group, never individually.
-    if (profile.groupId) continue;
-
     const { due, daysSince } = evaluateDue(profile, todayStr);
     if (!due) continue;
 
