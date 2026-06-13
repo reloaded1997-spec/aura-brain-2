@@ -22,6 +22,7 @@ export function DataProvider({ children }) {
   const [groups, setGroups] = useState([]);
   const [profiles, setProfiles] = useState([]);
   const [journals, setJournals] = useState([]);
+  const [acquaintances, setAcquaintances] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -30,6 +31,7 @@ export function DataProvider({ children }) {
       setGroups([]);
       setProfiles([]);
       setJournals([]);
+      setAcquaintances([]);
       setLoading(false);
       return undefined;
     }
@@ -48,6 +50,7 @@ export function DataProvider({ children }) {
         }
       }),
       dbApi.watchJournalEntries(user.uid, setJournals),
+      dbApi.watchAcquaintances(user.uid, setAcquaintances),
     ];
 
     return () => unsubs.forEach((u) => u && u());
@@ -70,11 +73,15 @@ export function DataProvider({ children }) {
       toggleHabit: dbApi.toggleHabit,
       addJournalEntry: (text) => dbApi.addJournalEntry(user.uid, text),
       updateProfileNotes: dbApi.updateProfileNotes,
+      addAcquaintance: (data) => dbApi.addAcquaintance(user.uid, data),
+      updateAcquaintance: dbApi.updateAcquaintance,
+      deleteAcquaintance: dbApi.deleteAcquaintance,
+      clearAcquaintance: dbApi.clearAcquaintance,
     }),
     [user]
   );
 
-  const value = { habits, groups, profiles, journals, loading, ...actions };
+  const value = { habits, groups, profiles, journals, acquaintances, loading, ...actions };
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
 }

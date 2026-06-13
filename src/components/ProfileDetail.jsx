@@ -26,10 +26,12 @@ export default function ProfileDetail({
   requests = [],
   logs = [],
   notes = '',
+  connections = [],
   onBack = () => {},
   onToggleRequest = () => {},
   onAddRequest = () => {},
   onNotesChange = () => {},
+  onOpenConnection = () => {},
   onEdit = null,
 }) {
   const [draft, setDraft] = useState('');
@@ -198,6 +200,30 @@ export default function ProfileDetail({
           </form>
         </div>
       </div>
+
+      {/* ---- Connections (acquaintances pointing at this person) ---- */}
+      {connections.length > 0 && (
+        <div className="px-4 pt-6">
+          <div className="mx-1 mb-[9px] text-[10px] font-semibold uppercase tracking-[1.8px] text-[#9A958A]">
+            Connections
+          </div>
+          <div className="overflow-hidden rounded-[18px] border border-[#EBE6DC] bg-white">
+            {connections.map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => onOpenConnection(c.id)}
+                className="flex w-full items-center gap-3 border-b border-[#F1ECE2] px-4 py-3 text-left last:border-b-0"
+              >
+                <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#EFEADF] font-['Newsreader'] text-[14px] text-[#6F6A60]">
+                  {c.initial}
+                </span>
+                <span className="font-['Newsreader'] text-[15px] text-[#26241F]">{c.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ---- Relational log ---- */}
       <div className="px-4 pt-6">

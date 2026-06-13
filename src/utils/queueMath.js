@@ -114,7 +114,7 @@ function evaluateDue(entity, todayStr) {
  *   totalDue: number
  * }}
  */
-export function generateDailyQueue(profiles = [], groups = [], todayStr = getTodayLocal()) {
+export function generateDailyQueue(profiles = [], groups = [], todayStr = getTodayLocal(), acquaintances = []) {
   // --- Groups -------------------------------------------------------------
   const dueGroups = [];
   for (const group of groups) {
@@ -146,6 +146,7 @@ export function generateDailyQueue(profiles = [], groups = [], todayStr = getTod
     if (!due) continue;
 
     dueProfiles.push({
+      entity: 'profile',
       type: 'profile',
       id: profile.id,
       name: profile.name,
@@ -153,6 +154,25 @@ export function generateDailyQueue(profiles = [], groups = [], todayStr = getTod
       lastClearedDate: profile.lastClearedDate ?? null,
       daysSince,
       reason: reasonText(daysSince, profile.priorityRate),
+    });
+  }
+
+  // --- Acquaintances (opt-in) ---------------------------------------------
+  for (const acq of acquaintances) {
+    if (acq.inQueue !== true) continue;
+
+    const { due, daysSince } = evaluateDue(acq, todayStr);
+    if (!due) continue;
+
+    dueProfiles.push({
+      entity: 'acquaintance',
+      type: 'profile',
+      id: acq.id,
+      name: acq.name,
+      priorityRate: acq.priorityRate,
+      lastClearedDate: acq.lastClearedDate ?? null,
+      daysSince,
+      reason: reasonText(daysSince, acq.priorityRate),
     });
   }
 

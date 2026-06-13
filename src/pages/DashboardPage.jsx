@@ -20,9 +20,9 @@ import ProfileCard from '../components/ProfileCard';
 import GroupAccordion from '../components/GroupAccordion';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
-import { addLog } from '../firebase/db';
+import { addLog, addUpdate } from '../firebase/db';
 import { generateDailyQueue, getTodayLocal } from '../utils/queueMath';
-import { decorateProfile, decorateGroup } from '../utils/display';
+import { decorateProfile, decorateGroup, decorateAcquaintance } from '../utils/display';
 import { initialFor } from '../utils/identity';
 
 function todayEyebrow() {
@@ -42,7 +42,7 @@ function timeOfDayGreeting() {
 
 export default function DashboardPage() {
   const { user, userDoc, logout } = useAuth();
-  const { habits, groups, profiles, loading, clearProfile, clearGroup, toggleHabit } = useData();
+  const { habits, groups, profiles, acquaintances, loading, clearProfile, clearGroup, clearAcquaintance, toggleHabit } = useData();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('queue');
 
@@ -52,6 +52,7 @@ export default function DashboardPage() {
     setActiveTab(key);
     if (key === 'journal') navigate('/journal');
     else if (key === 'network') navigate('/network');
+    else if (key === 'acquaintances') navigate('/acquaintances');
     else if (key === 'search') navigate('/search');
   };
 
@@ -68,7 +69,7 @@ export default function DashboardPage() {
 
   // --- Load-balanced due queue ---------------------------------------------
   const { dueGroups, dueProfiles } = useMemo(() => {
-    const result = generateDailyQueue(profiles, groups, today);
+    const result = generateDailyQueue(profiles, groups, today, acquaintances);
     const byId = (arr, id) => arr.find((x) => x.id === id);
 
     return {
@@ -80,16 +81,23 @@ export default function DashboardPage() {
           members: members.map(decorateProfile),
         };
       }),
-      dueProfiles: result.profiles.map((p) => decorateProfile(byId(profiles, p.id))),
+      dueProfiles: result.profiles.map((p) => {
+        if (p.entity === 'acquaintance') {
+          const original = byId(acquaintances, p.id);
+          return { ...decorateAcquaintance(original), entity: 'acquaintance' };
+        }
+        return { ...decorateProfile(byId(profiles, p.id)), entity: 'profile' };
+      }),
     };
-  }, [profiles, groups, today]);
+  }, [profiles, groups, acquaintances, today]);
 
   const remaining = dueGroups.length + dueProfiles.length;
 
   // Progress: cleared-today vs the day's full surfaced set (cleared + due).
   const clearedToday =
     profiles.filter((p) => !p.groupId && p.lastClearedDate === today).length +
-    groups.filter((g) => g.lastClearedDate === today).length;
+    groups.filter((g) => g.lastClearedDate === today).length +
+    acquaintances.filter((a) => a.inQueue === true && a.lastClearedDate === today).length;
   const total = clearedToday + remaining;
 
   // Interleave the group(s) among the people, like the design.
@@ -140,6 +148,14 @@ export default function DashboardPage() {
                   onCompleteGroup={(gid) =>
                     clearGroup(gid, item.data.members.map((m) => m.id))
                   }
+                />
+              ) : item.data.entity === 'acquaintance' ? (
+                <ProfileCard
+                  key={item.data.id}
+                  profile={item.data}
+                  onComplete={clearAcquaintance}
+                  onNote={addUpdate}
+                  onOpen={(aid) => navigate(`/acquaintance/${aid}`)}
                 />
               ) : (
                 <ProfileCard

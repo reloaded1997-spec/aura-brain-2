@@ -20,6 +20,8 @@ import ProfilePage from './pages/ProfilePage';
 import JournalPage from './pages/JournalPage';
 import NetworkPage from './pages/NetworkPage';
 import SearchPage from './pages/SearchPage';
+import AcquaintancesPage from './pages/AcquaintancesPage';
+import AcquaintanceDetailPage from './pages/AcquaintanceDetailPage';
 import { isProfileComplete } from './utils/identity';
 
 // Keep authenticated users out of the auth screen.
@@ -88,6 +90,22 @@ export default function App() {
         element={
           <ProtectedRoute>
             <SearchPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/acquaintances"
+        element={
+          <ProtectedRoute>
+            <AcquaintancesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/acquaintance/:id"
+        element={
+          <ProtectedRoute>
+            <AcquaintanceDetailPage />
           </ProtectedRoute>
         }
       />

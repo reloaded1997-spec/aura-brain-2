@@ -23,9 +23,9 @@
 import { useState } from 'react';
 import { X, Trash2, AlertTriangle } from 'lucide-react';
 import { useData } from '../context/DataContext';
-import { PersonForm, GroupForm, HabitForm } from './CardForms';
+import { PersonForm, GroupForm, HabitForm, AcquaintanceForm } from './CardForms';
 
-const TITLES = { person: 'Edit person', group: 'Edit group', habit: 'Edit habit' };
+const TITLES = { person: 'Edit person', group: 'Edit group', habit: 'Edit habit', acquaintance: 'Edit acquaintance' };
 
 export default function EditCardModal({
   type,
@@ -35,7 +35,7 @@ export default function EditCardModal({
   onClose = () => {},
   onDeleted = () => {},
 }) {
-  const { updateProfile, updateGroup, updateHabit, deleteProfile, deleteGroup, deleteHabit } = useData();
+  const { updateProfile, updateGroup, updateHabit, deleteProfile, deleteGroup, deleteHabit, updateAcquaintance, deleteAcquaintance } = useData();
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -46,20 +46,24 @@ export default function EditCardModal({
 
   function deleteWarning() {
     if (type === 'person') {
-      return `“${label}” and all of their active requests and relational log history will be permanently removed. This can’t be undone.`;
+      return `”${label}” and all of their active requests and relational log history will be permanently removed. This can't be undone.`;
     }
     if (type === 'group') {
-      if (members.length === 0) return `The group “${label}” will be permanently removed. This can’t be undone.`;
+      if (members.length === 0) return `The group “${label}” will be permanently removed. This can't be undone.`;
       const noun = members.length === 1 ? 'person' : 'people';
-      return `The group “${label}” will be removed. Its ${members.length} ${noun} will be kept as standalone profiles — they won’t be deleted. This can’t be undone.`;
+      return `The group “${label}” will be removed. Its ${members.length} ${noun} will be kept as standalone profiles — they won't be deleted. This can't be undone.`;
     }
-    return `The habit “${label}” and its streak history will be permanently removed. This can’t be undone.`;
+    if (type === 'acquaintance') {
+      return `”${label}” and all of its updates will be permanently removed. This can't be undone.`;
+    }
+    return `The habit “${label}” and its streak history will be permanently removed. This can't be undone.`;
   }
 
   function handleSubmit(payload) {
     if (type === 'person') updateProfile(record.id, payload);
     else if (type === 'group') updateGroup(record.id, payload);
     else if (type === 'habit') updateHabit(record.id, payload);
+    else if (type === 'acquaintance') updateAcquaintance(record.id, payload);
     onClose();
   }
 
@@ -69,6 +73,7 @@ export default function EditCardModal({
       if (type === 'person') await deleteProfile(record.id);
       else if (type === 'group') await deleteGroup(record.id, members.map((m) => m.id));
       else if (type === 'habit') await deleteHabit(record.id);
+      else if (type === 'acquaintance') await deleteAcquaintance(record.id);
       onDeleted();
       onClose();
     } finally {
@@ -139,6 +144,9 @@ export default function EditCardModal({
             )}
             {type === 'group' && <GroupForm mode="edit" initial={record} onSubmit={handleSubmit} />}
             {type === 'habit' && <HabitForm mode="edit" initial={record} onSubmit={handleSubmit} />}
+            {type === 'acquaintance' && (
+              <AcquaintanceForm mode="edit" initial={record} profiles={profiles} onSubmit={handleSubmit} />
+            )}
 
             <button
               type="button"

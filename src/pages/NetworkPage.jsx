@@ -9,9 +9,9 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UserPlus, Users, Sparkles, Pencil } from 'lucide-react';
+import { UserPlus, Users, Sparkles, Pencil, Contact } from 'lucide-react';
 import { BottomNav, NAV_PATHS } from '../components/Navigation';
-import { PersonForm, GroupForm, HabitForm } from '../components/CardForms';
+import { PersonForm, GroupForm, HabitForm, AcquaintanceForm } from '../components/CardForms';
 import EditCardModal from '../components/EditCardModal';
 import { useData } from '../context/DataContext';
 import { priorityLabelFromRate, initialOf } from '../utils/display';
@@ -20,6 +20,7 @@ const TABS = [
   { key: 'person', label: 'Person', Icon: UserPlus },
   { key: 'group', label: 'Group', Icon: Users },
   { key: 'habit', label: 'Habit', Icon: Sparkles },
+  { key: 'acquaintance', label: 'Acq.', Icon: Contact },
 ];
 
 function habitSub(h) {
@@ -29,7 +30,7 @@ function habitSub(h) {
 
 export default function NetworkPage() {
   const navigate = useNavigate();
-  const { profiles, groups, habits, addProfile, addGroup, addHabit } = useData();
+  const { profiles, groups, habits, acquaintances, addProfile, addGroup, addHabit, addAcquaintance } = useData();
   const [tab, setTab] = useState('person');
   // { type: 'person' | 'group' | 'habit', record } | null
   const [editing, setEditing] = useState(null);
@@ -72,6 +73,7 @@ export default function NetworkPage() {
           {tab === 'person' && <PersonForm groups={groups} onSubmit={addProfile} />}
           {tab === 'group' && <GroupForm onSubmit={addGroup} />}
           {tab === 'habit' && <HabitForm onSubmit={addHabit} />}
+          {tab === 'acquaintance' && <AcquaintanceForm profiles={profiles} onSubmit={addAcquaintance} />}
         </div>
 
         {/* Existing groups */}
@@ -123,6 +125,30 @@ export default function NetworkPage() {
                 onEdit={() => setEditing({ type: 'habit', record: h })}
               />
             ))}
+          </Section>
+        )}
+
+        {/* Acquaintances */}
+        {acquaintances.length > 0 && (
+          <Section title="Acquaintances">
+            {acquaintances.map((a) => {
+              const sub = [
+                a.descriptor,
+                a.inQueue ? `· every ${a.priorityRate} days` : '· not in queue',
+              ]
+                .filter(Boolean)
+                .join(' ');
+              return (
+                <Row
+                  key={a.id}
+                  initial={initialOf(a.name)}
+                  name={a.name}
+                  sub={sub}
+                  onClick={() => navigate('/acquaintance/' + a.id)}
+                  onEdit={() => setEditing({ type: 'acquaintance', record: a })}
+                />
+              );
+            })}
           </Section>
         )}
 

@@ -86,6 +86,22 @@ service cloud.firestore {
       }
     }
 
+    // ----- acquaintances/{acqId} (+ updates subcollection) -----------------
+    match /acquaintances/{acqId} {
+      allow read, delete: if ownsExisting();
+      allow create: if ownsIncoming();
+      allow update: if ownsExisting() && ownsIncoming();
+
+      function acqParentOwned() {
+        return isSignedIn() &&
+          get(/databases/$(database)/documents/acquaintances/$(acqId)).data.uid == request.auth.uid;
+      }
+
+      match /updates/{updateId} {
+        allow read, write: if acqParentOwned();
+      }
+    }
+
     // ----- journals/{journalId} ---------------------------------------------
     match /journals/{journalId} {
       allow read, delete: if ownsExisting();

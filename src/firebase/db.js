@@ -286,6 +286,58 @@ export function watchLogs(profileId, cb) {
   return onSnapshot(q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))));
 }
 
+// ----- Acquaintances ---------------------------------------------------------
+export const watchAcquaintances = (uid, cb) => watchOwned('acquaintances', uid, cb);
+
+function normalizeAcquaintancePatch(patch) {
+  const out = { ...patch };
+  if ('priorityRate' in out) out.priorityRate = Number(out.priorityRate);
+  if ('inQueue' in out) out.inQueue = Boolean(out.inQueue);
+  if ('linkedProfileIds' in out) out.linkedProfileIds = out.linkedProfileIds || [];
+  return out;
+}
+
+export function addAcquaintance(uid, { name, descriptor = '', inQueue = false, priorityRate = 7, linkedProfileIds = [] }) {
+  return addDoc(collection(db, 'acquaintances'), {
+    uid,
+    name,
+    descriptor,
+    inQueue: Boolean(inQueue),
+    priorityRate: Number(priorityRate),
+    linkedProfileIds: linkedProfileIds || [],
+    lastClearedDate: null,
+    createdAt: serverTimestamp(),
+  });
+}
+
+export function updateAcquaintance(acqId, patch) {
+  return updateDoc(doc(db, 'acquaintances', acqId), normalizeAcquaintancePatch(patch));
+}
+
+export function clearAcquaintance(acqId) {
+  return updateDoc(doc(db, 'acquaintances', acqId), { lastClearedDate: getTodayLocal() });
+}
+
+export async function deleteAcquaintance(acqId) {
+  const batch = writeBatch(db);
+  const snap = await getDocs(collection(db, 'acquaintances', acqId, 'updates'));
+  snap.forEach((d) => batch.delete(d.ref));
+  batch.delete(doc(db, 'acquaintances', acqId));
+  return batch.commit();
+}
+
+export function watchUpdates(acqId, cb) {
+  const q = query(collection(db, 'acquaintances', acqId, 'updates'), orderBy('timestamp', 'desc'));
+  return onSnapshot(q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))));
+}
+
+export function addUpdate(acqId, text) {
+  return addDoc(collection(db, 'acquaintances', acqId, 'updates'), {
+    text,
+    timestamp: serverTimestamp(),
+  });
+}
+
 // ----- Journals --------------------------------------------------------------
 // Writing a journal doc triggers the Cloud Function, which routes the note to
 // the people/groups it recognizes (§6). The client only writes the raw entry.

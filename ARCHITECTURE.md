@@ -44,10 +44,14 @@ The database must be optimized for offline-first capabilities using Firestore's 
 *   `profiles/{profileId}`: { uid, name, groupId: string | null, priorityRate: number, lastClearedDate: string, notes: string, openRequestCount: number }
     *   *Subcollection:* `requests/{requestId}`: { text, isCompleted: boolean, createdAt }
     *   *Subcollection:* `logs/{logId}`: { text, timestamp }
+*   `acquaintances/{acqId}`: { uid, name, descriptor: string, inQueue: boolean, priorityRate: number, lastClearedDate: string | null, linkedProfileIds: string[], createdAt }
+    *   *Subcollection:* `updates/{updateId}`: { text, timestamp }
+    *   *Lighter than a profile:* no requests, no notes field, no `openRequestCount`. The `updates` feed renders newest-first (`orderBy('timestamp','desc')`). Surfaces in the Daily Queue ONLY when `inQueue` is true, on its own `priorityRate`. `linkedProfileIds` ties it to `profiles` and is read in both directions (the acquaintance shows its people; each person shows its acquaintances as "connections").
 *   `journals/{journalId}`: { uid, text, timestamp, aiProcessed: boolean, linkedProfileIds: [] }
 
 ## 5. UI / UX Architecture
-*   **Bottom Navigation:** Sticky PWA nav bar (Queue, Network, Journal, Search).
+*   **Bottom Navigation:** Sticky PWA nav bar (Queue, Network, Acquaintances, Journal, Search).
+*   **Acquaintances:** A lighter relationship type for friends-of-friends / weaker ties. They live on their own bottom-nav tab AND inside the Network tab (a fourth create segment + list section). Optional Daily Queue surfacing (`inQueue` + cadence); when surfaced they mix in with people in the standalone-profile list. The detail page is intentionally light: a reverse-chron Updates feed (add-input pinned at top) and a Connections list of linked people.
 *   **Habit Strip:** Horizontal scrolling `flex overflow-x-auto` strip at the top of the Queue. Checked items drop to 50% opacity and move to the back of the list.
 *   **Group Accordions:** Groups in the queue render as headers. Clicking the text expands a nested list of profiles. Checking the master group checkbox sets the `lastClearedDate` to today for ALL nested profiles.
 *   **Profile Cards:** Must have an inline input for quick notes. Swiping right marks the card as complete, triggering an auto-collapse (height to 0px) transition before unmounting from the DOM.
@@ -83,6 +87,7 @@ Features that deepen existing screens without adding new navigation:
 *   **3.5 Journal History:** Display past journal entries (paginated, newest-first) below the compose area in `JournalPage.jsx`. Each entry shows its timestamp and a list of profile names it was routed to.
 
 ### Phase 4 — Breadth
+*   **Acquaintances (new entity):** A fourth card type alongside People/Groups/Habits for weaker ties. New `acquaintances` collection + `updates` subcollection (see §4). Lives on a new fifth bottom-nav tab and inside the Network tab. Opt-in Daily Queue surfacing via `inQueue` + `priorityRate` (reuses the existing load-balancer math); due acquaintances mix in with people in the queue. Reverse-chron Updates feed, and bidirectional connections to `profiles` via `linkedProfileIds`. `generateDailyQueue` gains a trailing optional `acquaintances` arg (additive — existing tests unaffected). New files: `AcquaintancesPage.jsx`, `AcquaintanceDetailPage.jsx`, `AcquaintanceDetail.jsx`.
 *   Daily Notes scratch pad (`dailyNotes/{uid}/{date}`)
 *   Tag system (`tags: string[]`) on profiles, groups, journals
 *   Insights / Analytics page (queue completion rate, relationship health, streak records)

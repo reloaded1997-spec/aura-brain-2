@@ -10,11 +10,12 @@
 // component. onNavigate(key) lets a parent wire routing later.
 // =============================================================================
 
-import { Inbox, Users, NotebookPen, Search } from 'lucide-react';
+import { Inbox, Users, NotebookPen, Search, Contact } from 'lucide-react';
 
 const NAV_ITEMS = [
   { key: 'queue', label: 'Queue', Icon: Inbox },
   { key: 'network', label: 'Network', Icon: Users },
+  { key: 'acquaintances', label: 'Circle', Icon: Contact },
   { key: 'journal', label: 'Journal', Icon: NotebookPen },
   { key: 'search', label: 'Search', Icon: Search },
 ];
@@ -23,6 +24,7 @@ const NAV_ITEMS = [
 export const NAV_PATHS = {
   queue: '/',
   network: '/network',
+  acquaintances: '/acquaintances',
   journal: '/journal',
   search: '/search',
 };

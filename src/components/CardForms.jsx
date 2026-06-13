@@ -16,7 +16,7 @@
 
 import { useState } from 'react';
 import { Plus, Check } from 'lucide-react';
-import { PRIORITY_RATES, priorityLabelFromRate } from '../utils/display';
+import { PRIORITY_RATES, priorityLabelFromRate, initialOf } from '../utils/display';
 
 export const fieldCls =
   'w-full rounded-lg border border-[#E2DCD0] bg-white px-3 py-2 text-[14px] text-[#26241F] placeholder:text-[#B0AB9E] focus:border-[#A8845C] focus:outline-none focus:ring-1 focus:ring-[#D8B98E]';
@@ -138,6 +138,88 @@ export function GroupForm({ mode = 'create', initial = null, onSubmit, submitLab
         <RateSelect value={priorityRate} onChange={setPriorityRate} />
       </div>
       <SubmitButton mode={mode}>{submitLabel || (mode === 'create' ? 'Create group' : 'Save changes')}</SubmitButton>
+    </form>
+  );
+}
+
+// ---- Acquaintance -----------------------------------------------------------
+export function AcquaintanceForm({ profiles = [], mode = 'create', initial = null, onSubmit, submitLabel }) {
+  const [name, setName] = useState(initial?.name || '');
+  const [descriptor, setDescriptor] = useState(initial?.descriptor || '');
+  const [inQueue, setInQueue] = useState(initial?.inQueue ?? false);
+  const [priorityRate, setPriorityRate] = useState(initial?.priorityRate || 7);
+  const [linkedProfileIds, setLinkedProfileIds] = useState(initial?.linkedProfileIds || []);
+
+  const people = profiles.filter((p) => !p.kind || p.kind === 'person');
+
+  function toggleLink(id) {
+    setLinkedProfileIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  }
+
+  function submit(e) {
+    e.preventDefault();
+    if (!name.trim()) return;
+    onSubmit({ name: name.trim(), descriptor: descriptor.trim(), inQueue, priorityRate, linkedProfileIds });
+    if (mode === 'create') {
+      setName('');
+      setDescriptor('');
+      setInQueue(false);
+      setPriorityRate(7);
+      setLinkedProfileIds([]);
+    }
+  }
+
+  return (
+    <form onSubmit={submit} className="flex flex-col gap-3">
+      <div>
+        <label className={labelCls}>Name</label>
+        <input className={fieldCls} value={name} onChange={(e) => setName(e.target.value)} placeholder="Sarah's brother Mike" />
+      </div>
+      <div>
+        <label className={labelCls}>Descriptor</label>
+        <input className={fieldCls} value={descriptor} onChange={(e) => setDescriptor(e.target.value)} placeholder="met at the men's retreat" />
+      </div>
+      <div className="flex items-center gap-3">
+        <label className="flex cursor-pointer items-center gap-2">
+          <input
+            type="checkbox"
+            checked={inQueue}
+            onChange={(e) => setInQueue(e.target.checked)}
+            className="h-4 w-4 accent-[#A8845C]"
+          />
+          <span className="text-[13px] text-[#6F6A60]">Surface in Daily Queue</span>
+        </label>
+      </div>
+      {inQueue && (
+        <div>
+          <label className={labelCls}>Cycle</label>
+          <RateSelect value={priorityRate} onChange={setPriorityRate} />
+        </div>
+      )}
+      {people.length > 0 && (
+        <div>
+          <label className={labelCls}>Connections (People)</label>
+          <div className="rounded-lg border border-[#E2DCD0] bg-white px-3 py-2 flex flex-col gap-1 max-h-40 overflow-y-auto">
+            {people.map((p) => (
+              <label key={p.id} className="flex cursor-pointer items-center gap-2 py-[3px]">
+                <input
+                  type="checkbox"
+                  checked={linkedProfileIds.includes(p.id)}
+                  onChange={() => toggleLink(p.id)}
+                  className="h-4 w-4 accent-[#A8845C]"
+                />
+                <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#EFEADF] font-['Newsreader'] text-[11px] text-[#6F6A60]">
+                  {initialOf(p.name)}
+                </span>
+                <span className="text-[13px] text-[#26241F]">{p.name}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+      <SubmitButton mode={mode}>{submitLabel || (mode === 'create' ? 'Add acquaintance' : 'Save changes')}</SubmitButton>
     </form>
   );
 }

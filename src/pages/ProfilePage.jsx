@@ -14,7 +14,7 @@ import EditCardModal from '../components/EditCardModal';
 import { BottomNav } from '../components/Navigation';
 import { useData } from '../context/DataContext';
 import { watchRequests, watchLogs, toggleRequest, addRequest, updateProfileNotes } from '../firebase/db';
-import { decorateProfile, lastPrayedLabel } from '../utils/display';
+import { decorateProfile, lastPrayedLabel, initialOf } from '../utils/display';
 import { getTodayLocal } from '../utils/queueMath';
 
 // Firestore Timestamp -> "Jun 9". Falls back gracefully while serverTimestamp
@@ -28,7 +28,7 @@ function formatLogDate(ts) {
 export default function ProfilePage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { profiles, groups, loading } = useData();
+  const { profiles, groups, acquaintances, loading } = useData();
 
   const [requests, setRequests] = useState([]);
   const [logs, setLogs] = useState([]);
@@ -88,6 +88,10 @@ export default function ProfilePage() {
     lastPrayedLabel: lastPrayedLabel(profile.lastClearedDate, getTodayLocal()),
   };
 
+  const connections = acquaintances
+    .filter((a) => a.linkedProfileIds?.includes(id))
+    .map((a) => ({ id: a.id, name: a.name, initial: initialOf(a.name) }));
+
   const logView = logs.map((l) => ({
     id: l.id,
     date: formatLogDate(l.timestamp),
@@ -111,6 +115,8 @@ export default function ProfilePage() {
           }}
           onAddRequest={(text) => addRequest(id, text)}
           onNotesChange={handleNotesChange}
+          connections={connections}
+          onOpenConnection={(aid) => navigate('/acquaintance/' + aid)}
         />
       </div>
       {editing && (

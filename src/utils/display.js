@@ -56,6 +56,20 @@ export function decorateGroup(g, memberCount = 0) {
   };
 }
 
+// Decorate an acquaintance doc for AcquaintanceDetail / queue.
+export function decorateAcquaintance(a) {
+  if (!a) return a;
+  return {
+    ...a,
+    initial: initialOf(a.name),
+    kind: 'acquaintance',
+    sub: a.descriptor || '',
+    priorityLabel: priorityLabelFromRate(a.priorityRate),
+    cycleLabel: cycleLabelFromRate(a.priorityRate),
+    requestCount: 0,
+  };
+}
+
 // "Last prayed N days ago" from a YYYY-MM-DD lastClearedDate.
 export function lastPrayedLabel(lastClearedDate, todayStr) {
   if (!lastClearedDate) return 'Not yet prayed';
