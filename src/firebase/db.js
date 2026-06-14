@@ -427,7 +427,10 @@ export function updateUserSettings(uid, patch) {
   for (const [k, v] of Object.entries(patch)) {
     dotted[`settings.${k}`] = v;
   }
-  return setDoc(doc(db, 'users', uid), dotted, { merge: true });
+  // updateDoc correctly interprets dot-notation strings as nested field paths.
+  // setDoc+merge would treat them as literal key names (with dots), writing to
+  // the wrong location and bypassing the watchUserDoc listener.
+  return updateDoc(doc(db, 'users', uid), dotted);
 }
 
 // ----- Daily Notes -----------------------------------------------------------
