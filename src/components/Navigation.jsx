@@ -13,7 +13,7 @@
 // component. onNavigate(key) lets a parent wire routing.
 // =============================================================================
 
-import { Inbox, Users, NotebookPen, Search, CalendarCheck } from 'lucide-react';
+import { Inbox, Users, NotebookPen, Search, CalendarCheck, Settings } from 'lucide-react';
 
 const NAV_ITEMS = [
   { key: 'queue',   label: 'Queue',   Icon: Inbox },
@@ -39,6 +39,7 @@ export function TopHeader({
   initial = 'J',
   cleared = 0,
   total = 10,
+  onSettings = null,
 }) {
   const pct = total > 0 ? Math.round((cleared / total) * 100) : 0;
 
@@ -58,8 +59,20 @@ export function TopHeader({
             </div>
           )}
         </div>
-        <div className="w-[38px] h-[38px] rounded-full border border-[#DDD6C8] bg-white flex items-center justify-center font-['Newsreader'] text-[17px] text-[#6F6A60]">
-          {initial}
+        <div className="flex items-center gap-2">
+          {onSettings && (
+            <button
+              type="button"
+              onClick={onSettings}
+              aria-label="Settings"
+              className="flex h-[38px] w-[38px] items-center justify-center rounded-full text-[#9A958A] transition-colors hover:bg-[#EFEAE0] hover:text-[#6F6A60]"
+            >
+              <Settings className="h-[18px] w-[18px]" strokeWidth={1.6} />
+            </button>
+          )}
+          <div className="w-[38px] h-[38px] rounded-full border border-[#DDD6C8] bg-white flex items-center justify-center font-['Newsreader'] text-[17px] text-[#6F6A60]">
+            {initial}
+          </div>
         </div>
       </div>
 

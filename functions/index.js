@@ -240,6 +240,36 @@ function daysDiff(lastClearedDate, todayStr) {
   return Math.round((today - last) / 86400000);
 }
 
+// --- Shared: count overdue items for one user --------------------------------
+// Used by both the morning and evening notification jobs. Returns the number of
+// profiles + groups that surface in the daily queue using the same isDue logic
+// as the client's generateDailyQueue (queueMath.js).
+async function getOverdueCount(uid, today) {
+  const [profilesSnap, groupsSnap] = await Promise.all([
+    db.collection('profiles').where('uid', '==', uid).get(),
+    db.collection('groups').where('uid', '==', uid).get(),
+  ]);
+  const isDue = (item) =>
+    daysDiff(item.lastClearedDate, today) >= (item.priorityRate || 7);
+  return (
+    profilesSnap.docs.filter((d) => isDue(d.data())).length +
+    groupsSnap.docs.filter((d) => isDue(d.data())).length
+  );
+}
+
+// --- Shared: prune stale FCM tokens -----------------------------------------
+async function pruneStaleTokens(uid, tokens, responses) {
+  const staleTokens = responses
+    .map((r, i) => (!r.success ? tokens[i] : null))
+    .filter(Boolean);
+  if (staleTokens.length > 0) {
+    await db
+      .collection('users')
+      .doc(uid)
+      .update({ fcmTokens: FieldValue.arrayRemove(...staleTokens) });
+  }
+}
+
 exports.sendDailyQueueNotifications = onSchedule(
   { schedule: '0 8 * * *', timeZone: 'America/New_York' },
   async () => {
@@ -247,23 +277,14 @@ exports.sendDailyQueueNotifications = onSchedule(
     const usersSnap = await db.collection('users').get();
 
     for (const userDoc of usersSnap.docs) {
-      const tokens = userDoc.data().fcmTokens || [];
+      const data = userDoc.data();
+      const tokens = data.fcmTokens || [];
       if (tokens.length === 0) continue;
+      // Respect explicit opt-out; treat missing/undefined as opted-in (backward compat).
+      if (data.settings?.notificationsEnabled === false) continue;
 
       const uid = userDoc.id;
-
-      const [profilesSnap, groupsSnap] = await Promise.all([
-        db.collection('profiles').where('uid', '==', uid).get(),
-        db.collection('groups').where('uid', '==', uid).get(),
-      ]);
-
-      const isDue = (item) =>
-        daysDiff(item.lastClearedDate, today) >= (item.priorityRate || 7);
-
-      const dueCount =
-        profilesSnap.docs.filter((d) => isDue(d.data())).length +
-        groupsSnap.docs.filter((d) => isDue(d.data())).length;
-
+      const dueCount = await getOverdueCount(uid, today);
       if (dueCount === 0) continue;
 
       const body =
@@ -276,17 +297,40 @@ exports.sendDailyQueueNotifications = onSchedule(
         notification: { title: 'Your queue is ready', body },
       });
 
-      // Remove any tokens that FCM reports as expired or invalid.
-      const staleTokens = response.responses
-        .map((r, i) => (!r.success ? tokens[i] : null))
-        .filter(Boolean);
+      await pruneStaleTokens(uid, tokens, response.responses);
+    }
+  }
+);
 
-      if (staleTokens.length > 0) {
-        await db
-          .collection('users')
-          .doc(uid)
-          .update({ fcmTokens: FieldValue.arrayRemove(...staleTokens) });
-      }
+exports.sendEveningQueueReminders = onSchedule(
+  { schedule: '0 20 * * *', timeZone: 'America/New_York' },
+  async () => {
+    const today = getTodayLocal();
+    const usersSnap = await db.collection('users').get();
+
+    for (const userDoc of usersSnap.docs) {
+      const data = userDoc.data();
+      const tokens = data.fcmTokens || [];
+      if (tokens.length === 0) continue;
+      // Only send to users who explicitly opted in to evening reminders.
+      if (data.settings?.eveningReminderEnabled !== true) continue;
+
+      const uid = userDoc.id;
+      const remaining = await getOverdueCount(uid, today);
+      // Skip silently if queue is fully cleared.
+      if (remaining === 0) continue;
+
+      const body =
+        remaining === 1
+          ? '1 still waiting in your queue tonight.'
+          : `${remaining} still waiting in your queue tonight.`;
+
+      const response = await getMessaging().sendEachForMulticast({
+        tokens,
+        notification: { title: 'Before you rest', body },
+      });
+
+      await pruneStaleTokens(uid, tokens, response.responses);
     }
   }
 );

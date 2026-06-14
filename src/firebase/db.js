@@ -419,6 +419,17 @@ export function watchJournalEntries(uid, cb) {
   );
 }
 
+// ----- User settings (users/{uid}.settings.*) --------------------------------
+// Writes only the keys present in `patch` using Firestore dot-notation so other
+// settings fields are never clobbered (merge: true handles the outer doc).
+export function updateUserSettings(uid, patch) {
+  const dotted = {};
+  for (const [k, v] of Object.entries(patch)) {
+    dotted[`settings.${k}`] = v;
+  }
+  return setDoc(doc(db, 'users', uid), dotted, { merge: true });
+}
+
 // ----- Daily Notes -----------------------------------------------------------
 // One doc per user per day: ID is `{uid}_{YYYY-MM-DD}`. Composite key means
 // upserts need no query — just getDoc/setDoc by ID.

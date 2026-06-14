@@ -23,4 +23,9 @@
     background-color: #faf8f3; /* paper */
     color: #26241f; /* ink */
   }
+
+  /* Font-scale utilities — applied via FontScaleApplier on <html>.
+     zoom scales all content (including Tailwind fixed-px classes) uniformly. */
+  html.font-scale-small body { zoom: 0.875; }
+  html.font-scale-large body { zoom: 1.125; }
 }

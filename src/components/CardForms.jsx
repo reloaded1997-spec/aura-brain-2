@@ -48,11 +48,11 @@ export function RateSelect({ value, onChange }) {
 }
 
 // ---- Person -----------------------------------------------------------------
-export function PersonForm({ groups = [], mode = 'create', initial = null, onSubmit, submitLabel }) {
+export function PersonForm({ groups = [], mode = 'create', initial = null, defaultPriorityRate = 7, onSubmit, submitLabel }) {
   const [name, setName] = useState(initial?.name || '');
   const [descriptor, setDescriptor] = useState(initial?.descriptor || '');
   const [kind, setKind] = useState(initial?.kind || 'person');
-  const [priorityRate, setPriorityRate] = useState(initial?.priorityRate || 7);
+  const [priorityRate, setPriorityRate] = useState(initial?.priorityRate || defaultPriorityRate);
   const [groupId, setGroupId] = useState(initial?.groupId || '');
   const [submitError, setSubmitError] = useState(null);
 
@@ -118,10 +118,10 @@ export function PersonForm({ groups = [], mode = 'create', initial = null, onSub
 }
 
 // ---- Group ------------------------------------------------------------------
-export function GroupForm({ mode = 'create', initial = null, onSubmit, submitLabel }) {
+export function GroupForm({ mode = 'create', initial = null, defaultPriorityRate = 7, onSubmit, submitLabel }) {
   const [name, setName] = useState(initial?.name || '');
   const [descriptor, setDescriptor] = useState(initial?.descriptor || '');
-  const [priorityRate, setPriorityRate] = useState(initial?.priorityRate || 7);
+  const [priorityRate, setPriorityRate] = useState(initial?.priorityRate || defaultPriorityRate);
 
   function submit(e) {
     e.preventDefault();

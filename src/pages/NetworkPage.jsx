@@ -16,6 +16,7 @@ import { BottomNav, NAV_PATHS } from '../components/Navigation';
 import { PersonForm, GroupForm, AcquaintanceForm } from '../components/CardForms';
 import EditCardModal from '../components/EditCardModal';
 import { useData } from '../context/DataContext';
+import { useSettings } from '../hooks/useSettings';
 import { priorityLabelFromRate, initialOf } from '../utils/display';
 
 const TABS = [
@@ -27,6 +28,7 @@ const TABS = [
 export default function NetworkPage() {
   const navigate = useNavigate();
   const { profiles, groups, acquaintances, addProfile, addGroup, addAcquaintance } = useData();
+  const { settings } = useSettings();
   const [tab, setTab] = useState('person');
   const [editing, setEditing] = useState(null);
 
@@ -65,8 +67,8 @@ export default function NetworkPage() {
         </div>
 
         <div className="rounded-[18px] border border-[#EBE6DC] bg-white p-4 shadow-[0_1px_2px_rgba(40,36,31,0.03)]">
-          {tab === 'person'      && <PersonForm groups={groups} onSubmit={addProfile} />}
-          {tab === 'group'       && <GroupForm onSubmit={addGroup} />}
+          {tab === 'person'      && <PersonForm groups={groups} onSubmit={addProfile} defaultPriorityRate={settings.defaultPriorityRate} />}
+          {tab === 'group'       && <GroupForm onSubmit={addGroup} defaultPriorityRate={settings.defaultPriorityRate} />}
           {tab === 'acquaintance' && <AcquaintanceForm profiles={profiles} onSubmit={addAcquaintance} />}
         </div>
 

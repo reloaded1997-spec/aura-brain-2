@@ -19,7 +19,7 @@
 // =============================================================================
 
 import { useEffect, useRef, useState } from 'react';
-import { ChevronLeft, Check, Plus, Pencil } from 'lucide-react';
+import { ChevronLeft, Check, ChevronDown, Plus, Pencil } from 'lucide-react';
 
 export default function ProfileDetail({
   profile,
@@ -27,6 +27,7 @@ export default function ProfileDetail({
   logs = [],
   notes = '',
   connections = [],
+  showAnswered = true,
   onBack = () => {},
   onToggleRequest = () => {},
   onAddRequest = () => {},
@@ -37,6 +38,7 @@ export default function ProfileDetail({
   const [draft, setDraft] = useState('');
   const [notesValue, setNotesValue] = useState(notes);
   const [saved, setSaved] = useState(false);
+  const [answeredOpen, setAnsweredOpen] = useState(false);
   const notesRef = useRef(null);
 
   // Sync prop → state when the profile changes (navigating between people).
@@ -62,6 +64,8 @@ export default function ProfileDetail({
   }
   const isGroup = profile?.kind === 'group';
   const role = profile?.role || profile?.sub;
+  const activeRequests = requests.filter((r) => !r.isCompleted);
+  const answeredRequests = requests.filter((r) => r.isCompleted);
 
   const cycle = profile?.priorityRate ? `every ${profile.priorityRate} days` : null;
   const priorityPill =
@@ -161,25 +165,15 @@ export default function ProfileDetail({
           Active requests
         </div>
         <div className="overflow-hidden rounded-[20px] border border-[#EBE6DC] bg-white shadow-[0_1px_2px_rgba(40,36,31,0.03)]">
-          {requests.map((r) => (
+          {activeRequests.map((r) => (
             <button
               key={r.id}
               type="button"
               onClick={() => onToggleRequest(r.id)}
               className="flex w-full items-start gap-3 border-b border-[#F1ECE2] px-[15px] py-[14px] text-left"
             >
-              <span
-                className={`mt-[1px] flex h-[22px] w-[22px] flex-shrink-0 items-center justify-center rounded-full border-[1.5px] transition-all duration-150 ${
-                  r.isCompleted ? 'border-[#5F7F67] bg-[#5F7F67]' : 'border-[#D2CBBC] bg-transparent'
-                }`}
-              >
-                {r.isCompleted && <Check className="h-3 w-3 text-white" strokeWidth={2.6} />}
-              </span>
-              <span
-                className={`flex-1 pt-[1px] text-[14.5px] leading-[1.4] ${
-                  r.isCompleted ? 'text-[#9A958A] line-through' : 'text-[#3A372F]'
-                }`}
-              >
+              <span className="mt-[1px] flex h-[22px] w-[22px] flex-shrink-0 items-center justify-center rounded-full border-[1.5px] border-[#D2CBBC] bg-transparent" />
+              <span className="flex-1 pt-[1px] text-[14.5px] leading-[1.4] text-[#3A372F]">
                 {r.text}
               </span>
             </button>
@@ -200,6 +194,42 @@ export default function ProfileDetail({
           </form>
         </div>
       </div>
+
+      {/* ---- Answered prayers (gated by showAnswered setting) ---- */}
+      {showAnswered && answeredRequests.length > 0 && (
+        <div className="px-4 pt-5">
+          <button
+            type="button"
+            onClick={() => setAnsweredOpen((o) => !o)}
+            className="mx-1 mb-[9px] flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[1.8px] text-[#9A958A]"
+          >
+            Answered prayers
+            <ChevronDown
+              className={`h-[13px] w-[13px] transition-transform duration-200 ${answeredOpen ? 'rotate-180' : ''}`}
+              strokeWidth={2}
+            />
+          </button>
+          {answeredOpen && (
+            <div className="overflow-hidden rounded-[20px] border border-[#EBE6DC] bg-white shadow-[0_1px_2px_rgba(40,36,31,0.03)]">
+              {answeredRequests.map((r) => (
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={() => onToggleRequest(r.id)}
+                  className="flex w-full items-start gap-3 border-b border-[#F1ECE2] px-[15px] py-[14px] text-left last:border-b-0"
+                >
+                  <span className="mt-[1px] flex h-[22px] w-[22px] flex-shrink-0 items-center justify-center rounded-full border-[1.5px] border-[#5F7F67] bg-[#5F7F67]">
+                    <Check className="h-3 w-3 text-white" strokeWidth={2.6} />
+                  </span>
+                  <span className="flex-1 pt-[1px] text-[14.5px] leading-[1.4] text-[#9A958A] line-through">
+                    {r.text}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ---- Connections (acquaintances pointing at this person) ---- */}
       {connections.length > 0 && (

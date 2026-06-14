@@ -13,6 +13,7 @@ import ProfileDetail from '../components/ProfileDetail';
 import EditCardModal from '../components/EditCardModal';
 import { BottomNav } from '../components/Navigation';
 import { useData } from '../context/DataContext';
+import { useSettings } from '../hooks/useSettings';
 import { watchRequests, watchLogs, toggleRequest, addRequest, updateProfileNotes } from '../firebase/db';
 import { decorateProfile, lastPrayedLabel, initialOf } from '../utils/display';
 import { getTodayLocal } from '../utils/queueMath';
@@ -29,6 +30,7 @@ export default function ProfilePage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { profiles, groups, acquaintances, loading } = useData();
+  const { settings } = useSettings();
 
   const [requests, setRequests] = useState([]);
   const [logs, setLogs] = useState([]);
@@ -107,6 +109,7 @@ export default function ProfilePage() {
           requests={requests}
           logs={logView}
           notes={profile.notes ?? ''}
+          showAnswered={settings.showAnswered}
           onBack={() => navigate(-1)}
           onEdit={() => setEditing(true)}
           onToggleRequest={(rid) => {

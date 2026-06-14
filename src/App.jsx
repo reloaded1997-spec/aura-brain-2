@@ -12,6 +12,7 @@
 // BrowserRouter + AuthProvider are mounted one level up in main.jsx.
 // =============================================================================
 
+import { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from './context/AuthContext';
@@ -25,7 +26,21 @@ import NetworkPage from './pages/NetworkPage';
 import SearchPage from './pages/SearchPage';
 import RhythmsPage from './pages/AcquaintancesPage';
 import AcquaintanceDetailPage from './pages/AcquaintanceDetailPage';
+import SettingsPage from './pages/SettingsPage';
 import { isProfileComplete } from './utils/identity';
+
+// Apply font-scale class to <html> whenever the user's setting changes.
+function FontScaleApplier() {
+  const { userDoc } = useAuth();
+  const scale = userDoc?.settings?.fontScale;
+  useEffect(() => {
+    const cls = document.documentElement.classList;
+    cls.remove('font-scale-small', 'font-scale-large');
+    if (scale === 'small') cls.add('font-scale-small');
+    else if (scale === 'large') cls.add('font-scale-large');
+  }, [scale]);
+  return null;
+}
 
 // Keep authenticated users out of the auth screen.
 function AuthRoute() {
@@ -53,6 +68,7 @@ function ProfileCompletionGate() {
 export default function App() {
   return (
     <>
+    <FontScaleApplier />
     <Routes>
       <Route path="/auth" element={<AuthRoute />} />
       <Route
@@ -115,6 +131,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <SearchPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <SettingsPage />
           </ProtectedRoute>
         }
       />

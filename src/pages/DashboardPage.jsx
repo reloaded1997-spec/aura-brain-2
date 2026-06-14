@@ -20,6 +20,7 @@ import ProfileCard from '../components/ProfileCard';
 import GroupAccordion from '../components/GroupAccordion';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
+import { useSettings } from '../hooks/useSettings';
 import { addLog, addUpdate } from '../firebase/db';
 import { generateDailyQueue, getTodayLocal } from '../utils/queueMath';
 import { decorateProfile, decorateGroup, decorateAcquaintance } from '../utils/display';
@@ -43,6 +44,7 @@ function timeOfDayGreeting() {
 export default function DashboardPage() {
   const { user, userDoc, logout } = useAuth();
   const { habits, groups, profiles, acquaintances, loading, clearProfile, clearGroup, clearAcquaintance, toggleHabit } = useData();
+  const { settings } = useSettings();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('queue');
 
@@ -113,10 +115,14 @@ export default function DashboardPage() {
       <TopHeader
         eyebrow={todayEyebrow()}
         title="Today"
-        greeting={userDoc?.firstName ? `${timeOfDayGreeting()}, ${userDoc.firstName}.` : ''}
+        greeting={(() => {
+          const name = settings.displayName || userDoc?.firstName || '';
+          return name ? `${timeOfDayGreeting()}, ${name}.` : '';
+        })()}
         initial={initialFor(userDoc, user?.email)}
         cleared={clearedToday}
         total={total || 0}
+        onSettings={() => navigate('/settings')}
       />
 
       <HabitStrip habits={habitView} onCheck={(id) => toggleHabit(habits.find((h) => h.id === id))} />
