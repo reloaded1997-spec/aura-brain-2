@@ -18,7 +18,7 @@ export default function JournalPage() {
   const { addJournalEntry, journals, profiles } = useData();
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#FAF8F3]">
+    <div className="flex min-h-screen flex-col bg-[#FAF8F3] dark:bg-[#171511]">
       <div className="flex-1 overflow-y-auto">
         <JournalCapture
           onCancel={() => navigate('/')}
@@ -30,7 +30,7 @@ export default function JournalPage() {
 
         {/* History */}
         <div className="px-4 pb-6 pt-2">
-          <div className="mb-3 text-[10px] font-semibold uppercase tracking-[1.8px] text-[#9A958A]">
+          <div className="mb-3 text-[10px] font-semibold uppercase tracking-[1.8px] text-[#9A958A] dark:text-[#827C70]">
             Past entries
           </div>
           <JournalHistory entries={journals} profiles={profiles} />

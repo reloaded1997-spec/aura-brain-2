@@ -46,17 +46,17 @@ export default function EditCardModal({
 
   function deleteWarning() {
     if (type === 'person') {
-      return `”${label}” and all of their active requests and relational log history will be permanently removed. This can't be undone.`;
+      return `"${label}" and all of their active requests and relational log history will be permanently removed. This can't be undone.`;
     }
     if (type === 'group') {
-      if (members.length === 0) return `The group “${label}” will be permanently removed. This can't be undone.`;
+      if (members.length === 0) return `The group "${label}" will be permanently removed. This can't be undone.`;
       const noun = members.length === 1 ? 'person' : 'people';
-      return `The group “${label}” will be removed. Its ${members.length} ${noun} will be kept as standalone profiles — they won't be deleted. This can't be undone.`;
+      return `The group "${label}" will be removed. Its ${members.length} ${noun} will be kept as standalone profiles — they won't be deleted. This can't be undone.`;
     }
     if (type === 'acquaintance') {
-      return `”${label}” and all of its updates will be permanently removed. This can't be undone.`;
+      return `"${label}" and all of its updates will be permanently removed. This can't be undone.`;
     }
-    return `The habit “${label}” and its streak history will be permanently removed. This can't be undone.`;
+    return `The habit "${label}" and its streak history will be permanently removed. This can't be undone.`;
   }
 
   function handleSubmit(payload) {
@@ -83,25 +83,25 @@ export default function EditCardModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 px-4 pb-4 pt-20 sm:items-center sm:pb-0"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 dark:bg-black/60 px-4 pb-4 pt-20 sm:items-center sm:pb-0"
       onClick={busy ? undefined : onClose}
     >
       <div
-        className="w-full max-w-md rounded-[20px] border border-[#EBE6DC] bg-white p-4 shadow-[0_8px_30px_rgba(40,36,31,0.18)]"
+        className="w-full max-w-md rounded-[20px] border border-[#EBE6DC] dark:border-[#322E27] bg-white dark:bg-[#221F1B] p-4 shadow-[0_8px_30px_rgba(40,36,31,0.18)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.5)]"
         onClick={(e) => e.stopPropagation()}
       >
         {confirming ? (
           // ---- Delete confirmation ---------------------------------------
           <div>
             <div className="mb-3 flex items-start gap-3">
-              <span className="mt-[2px] flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#FBEDEA] text-[#B4502F]">
+              <span className="mt-[2px] flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#FBEDEA] dark:bg-[#2A1C1A] text-[#B4502F]">
                 <AlertTriangle className="h-[18px] w-[18px]" strokeWidth={1.9} />
               </span>
               <div>
-                <div className="font-['Newsreader'] text-[20px] leading-tight text-[#1F1D18]">
+                <div className="font-['Newsreader'] text-[20px] leading-tight text-[#1F1D18] dark:text-[#F1EDE5]">
                   Delete {type}?
                 </div>
-                <p className="mt-[6px] text-[13.5px] leading-[1.45] text-[#6F6A60]">{deleteWarning()}</p>
+                <p className="mt-[6px] text-[13.5px] leading-[1.45] text-[#6F6A60] dark:text-[#A39C8E]">{deleteWarning()}</p>
               </div>
             </div>
             <div className="mt-4 flex gap-2">
@@ -109,7 +109,7 @@ export default function EditCardModal({
                 type="button"
                 onClick={() => setConfirming(false)}
                 disabled={busy}
-                className="flex-1 rounded-lg border border-[#E2DCD0] bg-white py-2.5 font-['Newsreader'] text-[15px] text-[#6F6A60] transition-colors hover:bg-[#F7F3EC] disabled:opacity-50"
+                className="flex-1 rounded-lg border border-[#E2DCD0] dark:border-[#302C25] bg-white dark:bg-[#171511] py-2.5 font-['Newsreader'] text-[15px] text-[#6F6A60] dark:text-[#A39C8E] transition-colors hover:bg-[#F7F3EC] dark:hover:bg-[#272320] disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -128,12 +128,12 @@ export default function EditCardModal({
           // ---- Edit form -------------------------------------------------
           <div>
             <div className="mb-3 flex items-center justify-between">
-              <div className="font-['Newsreader'] text-[20px] text-[#1F1D18]">{TITLES[type]}</div>
+              <div className="font-['Newsreader'] text-[20px] text-[#1F1D18] dark:text-[#F1EDE5]">{TITLES[type]}</div>
               <button
                 type="button"
                 onClick={onClose}
                 aria-label="Close"
-                className="flex h-8 w-8 items-center justify-center rounded-full text-[#9A958A] hover:bg-[#F1ECE2]"
+                className="flex h-8 w-8 items-center justify-center rounded-full text-[#9A958A] dark:text-[#827C70] hover:bg-[#F1ECE2] dark:hover:bg-[#272320]"
               >
                 <X className="h-[16px] w-[16px]" strokeWidth={2} />
               </button>
@@ -151,7 +151,7 @@ export default function EditCardModal({
             <button
               type="button"
               onClick={() => setConfirming(true)}
-              className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-[#EBD9D2] bg-white py-2 text-[13px] font-semibold text-[#B4502F] transition-colors hover:bg-[#FBEDEA]"
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-[#EBD9D2] dark:border-[#3A2520] bg-white dark:bg-[#221F1B] py-2 text-[13px] font-semibold text-[#B4502F] transition-colors hover:bg-[#FBEDEA] dark:hover:bg-[#2A1C1A]"
             >
               <Trash2 className="h-[14px] w-[14px]" strokeWidth={1.9} />
               Delete {type}

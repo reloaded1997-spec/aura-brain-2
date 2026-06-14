@@ -30,7 +30,7 @@ export default function AcquaintanceDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#FAF8F3] text-[#B6B0A2]">
+      <div className="flex min-h-screen items-center justify-center bg-[#FAF8F3] dark:bg-[#171511] text-[#B6B0A2] dark:text-[#6A645A]">
         <Loader2 className="h-6 w-6 animate-spin" />
       </div>
     );
@@ -38,12 +38,12 @@ export default function AcquaintanceDetailPage() {
 
   if (!acq) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-[#FAF8F3] px-6 text-center">
-        <p className="font-['Newsreader'] text-[18px] text-[#6F6A60]">That acquaintance isn't here.</p>
+      <div className="flex min-h-screen flex-col items-center justify-center bg-[#FAF8F3] dark:bg-[#171511] px-6 text-center">
+        <p className="font-['Newsreader'] text-[18px] text-[#6F6A60] dark:text-[#A39C8E]">That acquaintance isn't here.</p>
         <button
           type="button"
           onClick={() => navigate('/circle')}
-          className="mt-4 text-[13px] text-[#A8845C] underline underline-offset-4"
+          className="mt-4 text-[13px] text-[#A8845C] dark:text-[#C49A6C] underline underline-offset-4"
         >
           Back to Circle
         </button>
@@ -58,7 +58,7 @@ export default function AcquaintanceDetailPage() {
     .map((p) => ({ id: p.id, name: p.name, initial: initialOf(p.name) }));
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#FAF8F3]">
+    <div className="flex min-h-screen flex-col bg-[#FAF8F3] dark:bg-[#171511]">
       <div className="flex-1">
         <AcquaintanceDetail
           acquaintance={decorated}

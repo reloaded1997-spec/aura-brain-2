@@ -19,6 +19,7 @@ export const SETTINGS_DEFAULTS = {
   eveningReminderTime: '20:00',
   showAnswered: true,
   fontScale: 'medium',
+  darkMode: false,
 };
 
 export function useSettings() {

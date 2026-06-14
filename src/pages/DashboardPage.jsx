@@ -111,7 +111,7 @@ export default function DashboardPage() {
   if (dueProfiles.length < 2) dueGroups.forEach((g) => queueItems.push({ type: 'group', data: g }));
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#FAF8F3] text-[#26241F]">
+    <div className="flex min-h-screen flex-col bg-[#FAF8F3] dark:bg-[#171511] text-[#26241F] dark:text-[#ECE7DD]">
       <TopHeader
         eyebrow={todayEyebrow()}
         title="Today"
@@ -133,10 +133,10 @@ export default function DashboardPage() {
 
       <main className="flex-1 px-4 pt-4">
         <div className="mb-[11px] flex items-baseline justify-between px-[2px]">
-          <span className="text-[10px] font-semibold uppercase tracking-[1.8px] text-[#9A958A]">
+          <span className="text-[10px] font-semibold uppercase tracking-[1.8px] text-[#9A958A] dark:text-[#827C70]">
             The Queue
           </span>
-          <span className="text-[11px] text-[#9A958A]">{remaining} surfaced today</span>
+          <span className="text-[11px] text-[#9A958A] dark:text-[#827C70]">{remaining} surfaced today</span>
         </div>
 
         {loading ? (
@@ -175,7 +175,7 @@ export default function DashboardPage() {
             )}
 
             {remaining === 0 && (
-              <div className="my-10 text-center font-['Newsreader'] text-[15px] italic text-[#B6B0A2]">
+              <div className="my-10 text-center font-['Newsreader'] text-[15px] italic text-[#B6B0A2] dark:text-[#6A645A]">
                 {profiles.length === 0
                   ? 'No one in your network yet — add someone from the Circle tab.'
                   : 'When the queue is clear, rest.'}
@@ -188,7 +188,7 @@ export default function DashboardPage() {
           <button
             type="button"
             onClick={logout}
-            className="text-[12px] text-[#A8A294] underline underline-offset-4 hover:text-[#6F6A60]"
+            className="text-[12px] text-[#A8A294] dark:text-[#6E685D] underline underline-offset-4 hover:text-[#6F6A60] dark:hover:text-[#A39C8E]"
           >
             Sign out
           </button>

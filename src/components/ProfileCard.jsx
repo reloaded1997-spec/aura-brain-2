@@ -1,33 +1,15 @@
 // =============================================================================
 // components/ProfileCard.jsx — Queue person / request card (Phase 3, dumb)
-// -----------------------------------------------------------------------------
-// One relational card in the Daily Queue. Round avatar = person; rounded-square
-// avatar = standalone request (design §01). Quiet metadata row carries the
-// priority + cycle rate + request count.
-//
-// Completion mechanics (ARCHITECTURE.md §5):
-//   - Tapping the check circle (or swiping right) marks it complete.
-//   - That triggers an auto-collapse: the card animates height -> 0 + fade,
-//     then calls onComplete(id) so the parent can unmount it from the DOM.
-//   - Inline quick-note input for jotting a thought without leaving the queue.
-//
-// Props:
-//   profile    : { id, name, sub, kind, initial, priorityLabel, cycleLabel?,
-//                  priorityRate?, requestCount? }
-//   onComplete : (id) => void   — called AFTER the collapse transition ends.
-//   onNote     : (id, text) => void  — optional, fired on quick-note submit.
-//   onOpen     : (id) => void   — optional, open the full profile detail.
-//   showNote   : boolean (default true) — render the inline note input.
 // =============================================================================
 
 import { useRef, useState } from 'react';
 import { Check, ChevronRight } from 'lucide-react';
 
 const PRIORITY_COLOR = {
-  High: 'text-[#A8845C]',
-  Medium: 'text-[#6F6A60]',
-  Low: 'text-[#9A958A]',
-  Group: 'text-[#5F7F67]',
+  High:   'text-[#A8845C] dark:text-[#C49A6C]',
+  Medium: 'text-[#6F6A60] dark:text-[#A39C8E]',
+  Low:    'text-[#9A958A] dark:text-[#827C70]',
+  Group:  'text-[#5F7F67] dark:text-[#80A789]',
 };
 
 function cycleText(profile) {
@@ -46,8 +28,8 @@ export default function ProfileCard({
   const [done, setDone] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [note, setNote] = useState('');
-  const [noted, setNoted] = useState(false); // brief "saved" placeholder flash
-  const firedRef = useRef(false); // guard onTransitionEnd against multi-fire
+  const [noted, setNoted] = useState(false);
+  const firedRef = useRef(false);
 
   const isRequest = profile.kind === 'request';
   const reqCount = profile.requestCount || 0;
@@ -56,7 +38,6 @@ export default function ProfileCard({
   function complete() {
     if (leaving) return;
     setDone(true);
-    // Brief beat so the check + strike-through register before the collapse.
     setTimeout(() => setLeaving(true), 120);
   }
 
@@ -66,11 +47,8 @@ export default function ProfileCard({
     onComplete(profile.id);
   }
 
-  // Lightweight swipe-right -> complete (touch devices).
   const touchX = useRef(null);
-  function onTouchStart(e) {
-    touchX.current = e.touches[0].clientX;
-  }
+  function onTouchStart(e) { touchX.current = e.touches[0].clientX; }
   function onTouchEnd(e) {
     if (touchX.current == null) return;
     const dx = e.changedTouches[0].clientX - touchX.current;
@@ -98,7 +76,7 @@ export default function ProfileCard({
       <div
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
-        className="flex items-center gap-3 rounded-[18px] border border-[#EBE6DC] bg-white px-[14px] py-[11px] shadow-[0_1px_2px_rgba(40,36,31,0.03)]"
+        className="flex items-center gap-3 rounded-[18px] border border-[#EBE6DC] dark:border-[#322E27] bg-white dark:bg-[#221F1B] px-[14px] py-[11px] shadow-[0_1px_2px_rgba(40,36,31,0.03)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.32)]"
       >
         {/* Check circle */}
         <button
@@ -109,7 +87,9 @@ export default function ProfileCard({
         >
           <span
             className={`flex h-6 w-6 items-center justify-center rounded-full border-[1.5px] transition-all duration-150 ${
-              done ? 'border-[#5F7F67] bg-[#5F7F67]' : 'border-[#D2CBBC] bg-transparent'
+              done
+                ? 'border-[#5F7F67] dark:border-[#80A789] bg-[#5F7F67] dark:bg-[#80A789]'
+                : 'border-[#D2CBBC] dark:border-[#46413A] bg-transparent'
             }`}
           >
             {done && <Check className="h-[13px] w-[13px] text-white" strokeWidth={2.6} />}
@@ -121,8 +101,8 @@ export default function ProfileCard({
           onClick={onOpen ? () => onOpen(profile.id) : undefined}
           className={`flex h-10 w-10 flex-shrink-0 items-center justify-center font-['Newsreader'] text-[18px] transition-opacity duration-200 ${
             isRequest
-              ? 'rounded-[11px] bg-[#EDEFEA] text-[#5F7F67]'
-              : 'rounded-full bg-[#EFEADF] text-[#6F6A60]'
+              ? 'rounded-[11px] bg-[#EDEFEA] dark:bg-[#1E2A22] text-[#5F7F67] dark:text-[#80A789]'
+              : 'rounded-full bg-[#EFEADF] dark:bg-[#2A2620] text-[#6F6A60] dark:text-[#A39C8E]'
           } ${done ? 'opacity-50' : 'opacity-100'} ${onOpen ? 'cursor-pointer' : ''}`}
         >
           {profile.initial}
@@ -133,14 +113,14 @@ export default function ProfileCard({
           <div
             onClick={onOpen ? () => onOpen(profile.id) : undefined}
             className={`font-['Newsreader'] text-[17px] font-medium leading-[1.15] ${
-              done ? 'text-[#9A958A] line-through' : 'text-[#26241F]'
+              done ? 'text-[#9A958A] dark:text-[#827C70] line-through' : 'text-[#26241F] dark:text-[#ECE7DD]'
             } ${onOpen ? 'cursor-pointer' : ''}`}
           >
             {profile.name}
           </div>
           {profile.sub && (
             <div
-              className={`mt-[3px] text-[12.5px] leading-[1.25] text-[#6F6A60] ${
+              className={`mt-[3px] text-[12.5px] leading-[1.25] text-[#6F6A60] dark:text-[#A39C8E] ${
                 done ? 'opacity-50' : ''
               }`}
             >
@@ -151,15 +131,15 @@ export default function ProfileCard({
             {profile.priorityLabel && (
               <span
                 className={`text-[11px] font-semibold uppercase tracking-[0.3px] ${
-                  PRIORITY_COLOR[profile.priorityLabel] || 'text-[#6F6A60]'
+                  PRIORITY_COLOR[profile.priorityLabel] || 'text-[#6F6A60] dark:text-[#A39C8E]'
                 }`}
               >
                 {profile.priorityLabel}
               </span>
             )}
-            {cycle && <span className="text-[11px] text-[#A39E92]">· {cycle}</span>}
+            {cycle && <span className="text-[11px] text-[#A39E92] dark:text-[#6E685D]">· {cycle}</span>}
             {profile.kind === 'person' && reqCount > 0 && (
-              <span className="text-[11px] text-[#A39E92]">
+              <span className="text-[11px] text-[#A39E92] dark:text-[#6E685D]">
                 · {reqCount} {reqCount === 1 ? 'request' : 'requests'}
               </span>
             )}
@@ -173,7 +153,7 @@ export default function ProfileCard({
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 placeholder={noted ? 'Saved to their log ✓' : 'Quick note…'}
-                className="w-full border-b border-[#EFE9DD] bg-transparent pb-1 text-[12.5px] text-[#3A372F] placeholder:text-[#C3BCAD] focus:border-[#D2CBBC] focus:outline-none"
+                className="w-full border-b border-[#EFE9DD] dark:border-[#2A261E] bg-transparent pb-1 text-[12.5px] text-[#3A372F] dark:text-[#D6D1C6] placeholder:text-[#C3BCAD] dark:placeholder:text-[#544E45] focus:border-[#D2CBBC] dark:focus:border-[#46413A] focus:outline-none"
               />
             </form>
           )}
@@ -186,7 +166,7 @@ export default function ProfileCard({
           className="flex-shrink-0"
           disabled={!onOpen}
         >
-          <ChevronRight className="h-[14px] w-[14px] text-[#9A958A] opacity-35" />
+          <ChevronRight className="h-[14px] w-[14px] text-[#9A958A] dark:text-[#827C70] opacity-35" />
         </button>
       </div>
     </div>

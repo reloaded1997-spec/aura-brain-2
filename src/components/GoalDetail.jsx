@@ -68,11 +68,11 @@ export default function GoalDetail({ goal, habits, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 px-4 pb-4 pt-20 sm:items-center sm:pb-0"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 dark:bg-black/60 px-4 pb-4 pt-20 sm:items-center sm:pb-0"
       onClick={busy ? undefined : onClose}
     >
       <div
-        className="w-full max-w-md overflow-y-auto rounded-[20px] border border-[#EBE6DC] bg-white p-4 shadow-[0_8px_30px_rgba(40,36,31,0.18)]"
+        className="w-full max-w-md overflow-y-auto rounded-[20px] border border-[#EBE6DC] dark:border-[#322E27] bg-white dark:bg-[#221F1B] p-4 shadow-[0_8px_30px_rgba(40,36,31,0.18)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.5)]"
         style={{ maxHeight: '85vh' }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -80,14 +80,14 @@ export default function GoalDetail({ goal, habits, onClose }) {
           /* ---- Delete confirmation ---------------------------------------- */
           <div>
             <div className="mb-3 flex items-start gap-3">
-              <span className="mt-[2px] flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#FBEDEA] text-[#B4502F]">
+              <span className="mt-[2px] flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#FBEDEA] dark:bg-[#2A1C1A] text-[#B4502F]">
                 <AlertTriangle className="h-[18px] w-[18px]" strokeWidth={1.9} />
               </span>
               <div>
-                <div className="font-['Newsreader'] text-[20px] leading-tight text-[#1F1D18]">
+                <div className="font-['Newsreader'] text-[20px] leading-tight text-[#1F1D18] dark:text-[#F1EDE5]">
                   Delete goal?
                 </div>
-                <p className="mt-[6px] text-[13.5px] leading-[1.45] text-[#6F6A60]">
+                <p className="mt-[6px] text-[13.5px] leading-[1.45] text-[#6F6A60] dark:text-[#A39C8E]">
                   "{goal.title}" will be permanently removed.{' '}
                   {linkedCount > 0 && `Its ${linkedCount} linked habit${linkedCount === 1 ? '' : 's'} will be kept but unlinked. `}
                   This can't be undone.
@@ -99,7 +99,7 @@ export default function GoalDetail({ goal, habits, onClose }) {
                 type="button"
                 onClick={() => setConfirming(false)}
                 disabled={busy}
-                className="flex-1 rounded-lg border border-[#E2DCD0] bg-white py-2.5 font-['Newsreader'] text-[15px] text-[#6F6A60] transition-colors hover:bg-[#F7F3EC] disabled:opacity-50"
+                className="flex-1 rounded-lg border border-[#E2DCD0] dark:border-[#302C25] bg-white dark:bg-[#171511] py-2.5 font-['Newsreader'] text-[15px] text-[#6F6A60] dark:text-[#A39C8E] transition-colors hover:bg-[#F7F3EC] dark:hover:bg-[#272320] disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -118,12 +118,12 @@ export default function GoalDetail({ goal, habits, onClose }) {
           /* ---- Edit form -------------------------------------------------- */
           <form onSubmit={handleSave} className="flex flex-col gap-3">
             <div className="mb-1 flex items-center justify-between">
-              <div className="font-['Newsreader'] text-[20px] text-[#1F1D18]">Edit goal</div>
+              <div className="font-['Newsreader'] text-[20px] text-[#1F1D18] dark:text-[#F1EDE5]">Edit goal</div>
               <button
                 type="button"
                 onClick={onClose}
                 aria-label="Close"
-                className="flex h-8 w-8 items-center justify-center rounded-full text-[#9A958A] hover:bg-[#F1ECE2]"
+                className="flex h-8 w-8 items-center justify-center rounded-full text-[#9A958A] dark:text-[#827C70] hover:bg-[#F1ECE2] dark:hover:bg-[#272320]"
               >
                 <X className="h-[16px] w-[16px]" strokeWidth={2} />
               </button>
@@ -175,15 +175,15 @@ export default function GoalDetail({ goal, habits, onClose }) {
 
             {/* Habit linking */}
             <div className="mt-1">
-              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[1px] text-[#9A958A]">
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[1px] text-[#9A958A] dark:text-[#827C70]">
                 Habits feeding this goal{linkedCount > 0 ? ` · ${linkedCount}` : ''}
               </div>
               {habits.length === 0 ? (
-                <p className="font-['Newsreader'] text-[14px] italic text-[#B6B0A2]">
+                <p className="font-['Newsreader'] text-[14px] italic text-[#B6B0A2] dark:text-[#6A645A]">
                   No habits yet — add some from the Habits tab.
                 </p>
               ) : (
-                <div className="flex max-h-44 flex-col gap-0.5 overflow-y-auto rounded-lg border border-[#E2DCD0] bg-white px-3 py-2">
+                <div className="flex max-h-44 flex-col gap-0.5 overflow-y-auto rounded-lg border border-[#E2DCD0] dark:border-[#302C25] bg-white dark:bg-[#171511] px-3 py-2">
                   {habits.map((h) => {
                     const isLinkedHere = h.goalId === goal.id;
                     const isLinkedElsewhere = h.goalId && h.goalId !== goal.id;
@@ -195,9 +195,9 @@ export default function GoalDetail({ goal, habits, onClose }) {
                           onChange={() => toggleHabitLink(h)}
                           className="h-4 w-4 accent-[#A8845C]"
                         />
-                        <span className="flex-1 text-[13px] text-[#26241F]">{h.title}</span>
+                        <span className="flex-1 text-[13px] text-[#26241F] dark:text-[#ECE7DD]">{h.title}</span>
                         {isLinkedElsewhere && (
-                          <span className="text-[11px] italic text-[#A8A294]">other goal</span>
+                          <span className="text-[11px] italic text-[#A8A294] dark:text-[#6E685D]">other goal</span>
                         )}
                       </label>
                     );
@@ -208,7 +208,7 @@ export default function GoalDetail({ goal, habits, onClose }) {
 
             <button
               type="submit"
-              className="mt-1 flex w-full items-center justify-center gap-2 rounded-lg bg-[#A8845C] py-2.5 font-['Newsreader'] text-[15px] text-white transition-colors hover:bg-[#9a774f]"
+              className="mt-1 flex w-full items-center justify-center gap-2 rounded-lg bg-[#A8845C] dark:bg-[#C49A6C] py-2.5 font-['Newsreader'] text-[15px] text-white transition-colors hover:bg-[#9a774f] dark:hover:bg-[#b38a5e]"
             >
               Save changes
             </button>
@@ -216,7 +216,7 @@ export default function GoalDetail({ goal, habits, onClose }) {
             <button
               type="button"
               onClick={() => setConfirming(true)}
-              className="flex w-full items-center justify-center gap-2 rounded-lg border border-[#EBD9D2] bg-white py-2 text-[13px] font-semibold text-[#B4502F] transition-colors hover:bg-[#FBEDEA]"
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-[#EBD9D2] dark:border-[#3A2520] bg-white dark:bg-[#221F1B] py-2 text-[13px] font-semibold text-[#B4502F] transition-colors hover:bg-[#FBEDEA] dark:hover:bg-[#2A1C1A]"
             >
               <Trash2 className="h-[14px] w-[14px]" strokeWidth={1.9} />
               Delete goal

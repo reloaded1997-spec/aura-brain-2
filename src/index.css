@@ -8,6 +8,9 @@
 
 @import "tailwindcss";
 
+/* Class-based dark mode — toggled by adding .dark to <html> */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer base {
   html,
   body,
@@ -22,6 +25,15 @@
     text-rendering: optimizeLegibility;
     background-color: #faf8f3; /* paper */
     color: #26241f; /* ink */
+  }
+
+  /* Dark-mode body/html background — applied before React hydrates via the
+     flash-prevention script in index.html that adds .dark to <html>. */
+  html.dark,
+  html.dark body {
+    background-color: #171511;
+    color: #ece7dd;
+    color-scheme: dark;
   }
 
   /* Font-scale utilities — applied via FontScaleApplier on <html>.

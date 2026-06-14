@@ -35,20 +35,20 @@ export default function NetworkPage() {
   const people = profiles;
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#FAF8F3] text-[#26241F]">
+    <div className="flex min-h-screen flex-col bg-[#FAF8F3] dark:bg-[#171511] text-[#26241F] dark:text-[#ECE7DD]">
       {/* Header */}
       <div className="px-[22px] pt-14 pb-3">
-        <div className="text-[11px] font-semibold uppercase tracking-[1.6px] text-[#9A958A]">
+        <div className="text-[11px] font-semibold uppercase tracking-[1.6px] text-[#9A958A] dark:text-[#827C70]">
           Your circle
         </div>
-        <div className="mt-[3px] font-['Newsreader'] text-[32px] leading-[1.05] text-[#1F1D18]">
+        <div className="mt-[3px] font-['Newsreader'] text-[32px] leading-[1.05] text-[#1F1D18] dark:text-[#F1EDE5]">
           People &amp; groups
         </div>
       </div>
 
       <main className="flex-1 px-4">
         {/* Add — segmented control */}
-        <div className="mb-3 flex gap-1 rounded-xl bg-[#EFEAE0] p-1">
+        <div className="mb-3 flex gap-1 rounded-xl bg-[#EFEAE0] dark:bg-[#24221C] p-1">
           {TABS.map(({ key, label, Icon }) => (
             <button
               key={key}
@@ -56,8 +56,8 @@ export default function NetworkPage() {
               onClick={() => setTab(key)}
               className={`flex flex-1 items-center justify-center gap-[6px] rounded-lg py-2 font-['Newsreader'] text-[14px] transition-all ${
                 tab === key
-                  ? 'border border-[#E6DFD2] bg-white text-[#26241F] shadow-[0_1px_2px_rgba(40,36,31,0.08)]'
-                  : 'border border-transparent text-[#9A958A]'
+                  ? 'border border-[#E6DFD2] dark:border-[#302C25] bg-white dark:bg-[#221F1B] text-[#26241F] dark:text-[#ECE7DD] shadow-[0_1px_2px_rgba(40,36,31,0.08)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.32)]'
+                  : 'border border-transparent text-[#9A958A] dark:text-[#827C70]'
               }`}
             >
               <Icon className="h-[14px] w-[14px]" strokeWidth={1.8} />
@@ -66,7 +66,7 @@ export default function NetworkPage() {
           ))}
         </div>
 
-        <div className="rounded-[18px] border border-[#EBE6DC] bg-white p-4 shadow-[0_1px_2px_rgba(40,36,31,0.03)]">
+        <div className="rounded-[18px] border border-[#EBE6DC] dark:border-[#322E27] bg-white dark:bg-[#221F1B] p-4 shadow-[0_1px_2px_rgba(40,36,31,0.03)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.32)]">
           {tab === 'person'      && <PersonForm groups={groups} onSubmit={addProfile} defaultPriorityRate={settings.defaultPriorityRate} />}
           {tab === 'group'       && <GroupForm onSubmit={addGroup} defaultPriorityRate={settings.defaultPriorityRate} />}
           {tab === 'acquaintance' && <AcquaintanceForm profiles={profiles} onSubmit={addAcquaintance} />}
@@ -91,7 +91,7 @@ export default function NetworkPage() {
         {/* Standalone people & requests */}
         <Section title="People & requests">
           {people.length === 0 && (
-            <div className="px-1 py-3 font-['Newsreader'] text-[14px] italic text-[#B6B0A2]">
+            <div className="px-1 py-3 font-['Newsreader'] text-[14px] italic text-[#B6B0A2] dark:text-[#6A645A]">
               No one yet — add your first person above.
             </div>
           )}
@@ -154,17 +154,17 @@ export default function NetworkPage() {
 function Section({ title, children }) {
   return (
     <div className="mt-6">
-      <div className="mx-1 mb-2 text-[10px] font-semibold uppercase tracking-[1.8px] text-[#9A958A]">
+      <div className="mx-1 mb-2 text-[10px] font-semibold uppercase tracking-[1.8px] text-[#9A958A] dark:text-[#827C70]">
         {title}
       </div>
-      <div className="overflow-hidden rounded-[18px] border border-[#EBE6DC] bg-white">{children}</div>
+      <div className="overflow-hidden rounded-[18px] border border-[#EBE6DC] dark:border-[#322E27] bg-white dark:bg-[#221F1B]">{children}</div>
     </div>
   );
 }
 
 function Row({ initial, name, sub, square, onClick, onEdit }) {
   return (
-    <div className="flex items-center border-b border-[#F1ECE2] last:border-b-0">
+    <div className="flex items-center border-b border-[#F1ECE2] dark:border-[#272320] last:border-b-0">
       <button
         type="button"
         onClick={onClick}
@@ -172,15 +172,15 @@ function Row({ initial, name, sub, square, onClick, onEdit }) {
         className="flex min-w-0 flex-1 items-center gap-3 px-4 py-3 text-left disabled:cursor-default"
       >
         <span
-          className={`flex h-9 w-9 flex-shrink-0 items-center justify-center bg-[#EFEADF] font-['Newsreader'] text-[15px] text-[#6F6A60] ${
+          className={`flex h-9 w-9 flex-shrink-0 items-center justify-center bg-[#EFEADF] dark:bg-[#2A2620] font-['Newsreader'] text-[15px] text-[#6F6A60] dark:text-[#A39C8E] ${
             square ? 'rounded-[10px]' : 'rounded-full'
           }`}
         >
           {initial}
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block font-['Newsreader'] text-[15px] text-[#26241F]">{name}</span>
-          <span className="block text-[12px] text-[#9A958A]">{sub}</span>
+          <span className="block font-['Newsreader'] text-[15px] text-[#26241F] dark:text-[#ECE7DD]">{name}</span>
+          <span className="block text-[12px] text-[#9A958A] dark:text-[#827C70]">{sub}</span>
         </span>
       </button>
       {onEdit && (
@@ -188,7 +188,7 @@ function Row({ initial, name, sub, square, onClick, onEdit }) {
           type="button"
           onClick={onEdit}
           aria-label={`Edit ${name}`}
-          className="mr-2 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-[#9A958A] transition-colors hover:bg-[#F1ECE2] hover:text-[#6F6A60]"
+          className="mr-2 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-[#9A958A] dark:text-[#827C70] transition-colors hover:bg-[#F1ECE2] dark:hover:bg-[#272320] hover:text-[#6F6A60] dark:hover:text-[#A39C8E]"
         >
           <Pencil className="h-[15px] w-[15px]" strokeWidth={1.8} />
         </button>

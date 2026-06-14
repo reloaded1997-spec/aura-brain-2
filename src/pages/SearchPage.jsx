@@ -49,35 +49,35 @@ export default function SearchPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#FAF8F3] text-[#26241F]">
+    <div className="flex min-h-screen flex-col bg-[#FAF8F3] dark:bg-[#171511] text-[#26241F] dark:text-[#ECE7DD]">
       {/* Header */}
       <div className="px-[22px] pt-14 pb-3">
-        <div className="text-[11px] font-semibold uppercase tracking-[1.6px] text-[#9A958A]">
+        <div className="text-[11px] font-semibold uppercase tracking-[1.6px] text-[#9A958A] dark:text-[#827C70]">
           Find anyone
         </div>
-        <div className="mt-[3px] font-['Newsreader'] text-[32px] leading-[1.05] text-[#1F1D18]">
+        <div className="mt-[3px] font-['Newsreader'] text-[32px] leading-[1.05] text-[#1F1D18] dark:text-[#F1EDE5]">
           Search
         </div>
       </div>
 
       <main className="flex-1 px-4">
         {/* Search field */}
-        <div className="flex items-center gap-[10px] rounded-[15px] border border-[#EBE6DC] bg-white px-[14px] py-[11px] shadow-[0_1px_2px_rgba(40,36,31,0.03)] focus-within:border-[#D8B98E]">
-          <SearchIcon className="h-[16px] w-[16px] flex-shrink-0 text-[#A39E92]" strokeWidth={1.8} />
+        <div className="flex items-center gap-[10px] rounded-[15px] border border-[#EBE6DC] dark:border-[#322E27] bg-white dark:bg-[#221F1B] px-[14px] py-[11px] shadow-[0_1px_2px_rgba(40,36,31,0.03)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.32)] focus-within:border-[#D8B98E] dark:focus-within:border-[#A8845C]">
+          <SearchIcon className="h-[16px] w-[16px] flex-shrink-0 text-[#A39E92] dark:text-[#6E685D]" strokeWidth={1.8} />
           <input
             type="search"
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="A name, a descriptor, a habit…"
-            className="min-w-0 flex-1 bg-transparent font-['Newsreader'] text-[16px] text-[#26241F] placeholder:text-[#B0AB9E] focus:outline-none [&::-webkit-search-cancel-button]:hidden"
+            className="min-w-0 flex-1 bg-transparent font-['Newsreader'] text-[16px] text-[#26241F] dark:text-[#ECE7DD] placeholder:text-[#B0AB9E] dark:placeholder:text-[#6E685D] focus:outline-none [&::-webkit-search-cancel-button]:hidden"
           />
           {query && (
             <button
               type="button"
               onClick={() => setQuery('')}
               aria-label="Clear search"
-              className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-[#9A958A] hover:bg-[#F1ECE2]"
+              className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-[#9A958A] dark:text-[#827C70] hover:bg-[#F1ECE2] dark:hover:bg-[#272320]"
             >
               <X className="h-[14px] w-[14px]" strokeWidth={2} />
             </button>
@@ -86,13 +86,13 @@ export default function SearchPage() {
 
         {/* Idle / empty states */}
         {!results && (
-          <div className="mt-10 text-center font-['Newsreader'] text-[15px] italic text-[#B6B0A2]">
+          <div className="mt-10 text-center font-['Newsreader'] text-[15px] italic text-[#B6B0A2] dark:text-[#6A645A]">
             Everyone you carry is a few letters away.
           </div>
         )}
         {results && totalHits === 0 && (
-          <div className="mt-10 text-center font-['Newsreader'] text-[15px] italic text-[#B6B0A2]">
-            Nothing matches “{query.trim()}” yet.
+          <div className="mt-10 text-center font-['Newsreader'] text-[15px] italic text-[#B6B0A2] dark:text-[#6A645A]">
+            Nothing matches "{query.trim()}" yet.
           </div>
         )}
 
@@ -179,17 +179,17 @@ export default function SearchPage() {
 function Section({ title, children }) {
   return (
     <div className="mt-6">
-      <div className="mx-1 mb-2 text-[10px] font-semibold uppercase tracking-[1.8px] text-[#9A958A]">
+      <div className="mx-1 mb-2 text-[10px] font-semibold uppercase tracking-[1.8px] text-[#9A958A] dark:text-[#827C70]">
         {title}
       </div>
-      <div className="overflow-hidden rounded-[18px] border border-[#EBE6DC] bg-white">{children}</div>
+      <div className="overflow-hidden rounded-[18px] border border-[#EBE6DC] dark:border-[#322E27] bg-white dark:bg-[#221F1B]">{children}</div>
     </div>
   );
 }
 
 function Row({ initial, name, sub, square, onClick, onEdit }) {
   return (
-    <div className="flex items-center border-b border-[#F1ECE2] last:border-b-0">
+    <div className="flex items-center border-b border-[#F1ECE2] dark:border-[#272320] last:border-b-0">
       <button
         type="button"
         onClick={onClick}
@@ -197,17 +197,17 @@ function Row({ initial, name, sub, square, onClick, onEdit }) {
         className="flex min-w-0 flex-1 items-center gap-3 px-4 py-3 text-left disabled:cursor-default"
       >
         <span
-          className={`flex h-9 w-9 flex-shrink-0 items-center justify-center bg-[#EFEADF] font-['Newsreader'] text-[15px] text-[#6F6A60] ${
+          className={`flex h-9 w-9 flex-shrink-0 items-center justify-center bg-[#EFEADF] dark:bg-[#2A2620] font-['Newsreader'] text-[15px] text-[#6F6A60] dark:text-[#A39C8E] ${
             square ? 'rounded-[10px]' : 'rounded-full'
           }`}
         >
           {initial}
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate font-['Newsreader'] text-[15px] text-[#26241F]">
+          <span className="block truncate font-['Newsreader'] text-[15px] text-[#26241F] dark:text-[#ECE7DD]">
             {name}
           </span>
-          <span className="block truncate text-[12px] text-[#9A958A]">{sub}</span>
+          <span className="block truncate text-[12px] text-[#9A958A] dark:text-[#827C70]">{sub}</span>
         </span>
       </button>
       {onEdit && (
@@ -215,7 +215,7 @@ function Row({ initial, name, sub, square, onClick, onEdit }) {
           type="button"
           onClick={onEdit}
           aria-label={`Edit ${name}`}
-          className="mr-2 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-[#9A958A] transition-colors hover:bg-[#F1ECE2] hover:text-[#6F6A60]"
+          className="mr-2 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-[#9A958A] dark:text-[#827C70] transition-colors hover:bg-[#F1ECE2] dark:hover:bg-[#272320] hover:text-[#6F6A60] dark:hover:text-[#A39C8E]"
         >
           <Pencil className="h-[15px] w-[15px]" strokeWidth={1.8} />
         </button>

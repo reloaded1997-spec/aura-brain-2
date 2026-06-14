@@ -20,15 +20,15 @@ function EntryCard({ entry, profiles }) {
   }, [entry.linkedProfileIds, profiles]);
 
   return (
-    <div className="rounded-[18px] border border-[#EBE6DC] bg-white px-[15px] py-[13px] shadow-[0_1px_2px_rgba(40,36,31,0.03)]">
-      <div className="mb-[6px] text-[11px] text-[#9A958A]">{formatEntryDate(entry.timestamp)}</div>
-      <p className="font-['Newsreader'] text-[15px] leading-[1.55] text-[#3A372F]">{preview}</p>
+    <div className="rounded-[18px] border border-[#EBE6DC] dark:border-[#322E27] bg-white dark:bg-[#221F1B] px-[15px] py-[13px] shadow-[0_1px_2px_rgba(40,36,31,0.03)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.32)]">
+      <div className="mb-[6px] text-[11px] text-[#9A958A] dark:text-[#827C70]">{formatEntryDate(entry.timestamp)}</div>
+      <p className="font-['Newsreader'] text-[15px] leading-[1.55] text-[#3A372F] dark:text-[#D6D1C6]">{preview}</p>
       {linkedNames.length > 0 && (
         <div className="mt-[9px] flex flex-wrap gap-[6px]">
           {linkedNames.map((name) => (
             <span
               key={name}
-              className="rounded-full bg-[#F1ECE2] px-[9px] py-[3px] text-[11px] text-[#6F6A60]"
+              className="rounded-full bg-[#F1ECE2] dark:bg-[#272320] px-[9px] py-[3px] text-[11px] text-[#6F6A60] dark:text-[#A39C8E]"
             >
               {name}
             </span>
@@ -42,7 +42,7 @@ function EntryCard({ entry, profiles }) {
 export default function JournalHistory({ entries = [], profiles = [], onEntryPress }) {
   if (entries.length === 0) {
     return (
-      <p className="text-center font-['Newsreader'] text-[15px] italic text-[#B6B0A2]">
+      <p className="text-center font-['Newsreader'] text-[15px] italic text-[#B6B0A2] dark:text-[#6A645A]">
         Your journal is empty. Start writing.
       </p>
     );

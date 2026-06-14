@@ -42,6 +42,23 @@ function FontScaleApplier() {
   return null;
 }
 
+// Apply dark class to <html> and persist to localStorage for instant load.
+function DarkModeApplier() {
+  const { userDoc } = useAuth();
+  const dark = userDoc?.settings?.darkMode;
+  useEffect(() => {
+    if (dark === undefined) return; // userDoc still loading
+    if (dark) {
+      document.documentElement.classList.add('dark');
+      try { localStorage.setItem('aura-dark', '1'); } catch (e) {}
+    } else {
+      document.documentElement.classList.remove('dark');
+      try { localStorage.setItem('aura-dark', '0'); } catch (e) {}
+    }
+  }, [dark]);
+  return null;
+}
+
 // Keep authenticated users out of the auth screen.
 function AuthRoute() {
   const { user, loading } = useAuth();
@@ -69,6 +86,7 @@ export default function App() {
   return (
     <>
     <FontScaleApplier />
+    <DarkModeApplier />
     <Routes>
       <Route path="/auth" element={<AuthRoute />} />
       <Route

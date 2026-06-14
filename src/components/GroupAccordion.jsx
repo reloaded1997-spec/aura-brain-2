@@ -1,20 +1,5 @@
 // =============================================================================
 // components/GroupAccordion.jsx — Group queue item (Phase 3, dumb)
-// -----------------------------------------------------------------------------
-// A group surfaces in the queue as a single header row that can expand inline
-// to its members (ARCHITECTURE.md §5):
-//   - Clicking the group TEXT toggles the nested member list.
-//   - The master check circle clears the WHOLE group at once (in real life this
-//     stamps lastClearedDate=today on every nested profile). Here it animates
-//     the card collapse and calls onCompleteGroup(id).
-//   - "Check off the whole group" button = the same batch action from inside.
-//   - Individual member circles toggle locally (visual only in Phase 3).
-//
-// Props:
-//   group          : { id, name, sub, initial, priorityLabel?, priorityRate? }
-//   nestedProfiles : array of member profiles ({ id, name, sub, initial })
-//   onCompleteGroup: (groupId) => void   — after the collapse transition ends.
-//   defaultOpen    : boolean (default false)
 // =============================================================================
 
 import { useRef, useState } from 'react';
@@ -29,7 +14,7 @@ export default function GroupAccordion({
   const [open, setOpen] = useState(defaultOpen);
   const [groupDone, setGroupDone] = useState(false);
   const [leaving, setLeaving] = useState(false);
-  const [memberDone, setMemberDone] = useState({}); // id -> bool
+  const [memberDone, setMemberDone] = useState({});
   const firedRef = useRef(false);
 
   const subLabel = groupDone
@@ -60,7 +45,7 @@ export default function GroupAccordion({
         leaving ? 'max-h-0 opacity-0 mb-0' : 'max-h-[700px] opacity-100 mb-[9px]'
       }`}
     >
-      <div className="overflow-hidden rounded-[18px] border border-[#EBE6DC] bg-white shadow-[0_1px_2px_rgba(40,36,31,0.03)]">
+      <div className="overflow-hidden rounded-[18px] border border-[#EBE6DC] dark:border-[#322E27] bg-white dark:bg-[#221F1B] shadow-[0_1px_2px_rgba(40,36,31,0.03)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.32)]">
         {/* Header row */}
         <div className="flex items-center gap-3 px-[14px] py-[13px]">
           {/* Master check circle */}
@@ -72,7 +57,9 @@ export default function GroupAccordion({
           >
             <span
               className={`flex h-6 w-6 items-center justify-center rounded-full border-[1.5px] transition-all duration-150 ${
-                groupDone ? 'border-[#5F7F67] bg-[#5F7F67]' : 'border-[#D2CBBC] bg-transparent'
+                groupDone
+                  ? 'border-[#5F7F67] dark:border-[#80A789] bg-[#5F7F67] dark:bg-[#80A789]'
+                  : 'border-[#D2CBBC] dark:border-[#46413A] bg-transparent'
               }`}
             >
               {groupDone && <Check className="h-[13px] w-[13px] text-white" strokeWidth={2.6} />}
@@ -80,7 +67,7 @@ export default function GroupAccordion({
           </button>
 
           {/* Group avatar (rounded square) */}
-          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[11px] bg-[#ECE7DB] font-['Newsreader'] text-[18px] text-[#6F6A60]">
+          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[11px] bg-[#ECE7DB] dark:bg-[#2C2820] font-['Newsreader'] text-[18px] text-[#6F6A60] dark:text-[#A39C8E]">
             {group.initial}
           </div>
 
@@ -90,8 +77,8 @@ export default function GroupAccordion({
             onClick={() => setOpen((o) => !o)}
             className="min-w-0 flex-1 text-left"
           >
-            <div className="font-['Newsreader'] text-[17px] text-[#26241F]">{group.name}</div>
-            <div className="mt-[2px] text-[12.5px] text-[#6F6A60]">{subLabel}</div>
+            <div className="font-['Newsreader'] text-[17px] text-[#26241F] dark:text-[#ECE7DD]">{group.name}</div>
+            <div className="mt-[2px] text-[12.5px] text-[#6F6A60] dark:text-[#A39C8E]">{subLabel}</div>
           </button>
 
           {/* Chevron */}
@@ -102,7 +89,7 @@ export default function GroupAccordion({
             className="flex h-[34px] w-[34px] flex-shrink-0 items-center justify-center"
           >
             <ChevronDown
-              className={`h-[14px] w-[14px] text-[#9A958A] transition-transform duration-200 ${
+              className={`h-[14px] w-[14px] text-[#9A958A] dark:text-[#827C70] transition-transform duration-200 ${
                 open ? 'rotate-180' : 'rotate-0'
               }`}
             />
@@ -111,7 +98,7 @@ export default function GroupAccordion({
 
         {/* Expanded members */}
         {open && (
-          <div className="border-t border-[#F1ECE2] bg-[#FCFBF8] py-1">
+          <div className="border-t border-[#F1ECE2] dark:border-[#272320] bg-[#FCFBF8] dark:bg-[#1B1A20] py-1">
             {nestedProfiles.map((m) => {
               const mDone = !!memberDone[m.id];
               return (
@@ -123,24 +110,28 @@ export default function GroupAccordion({
                 >
                   <span
                     className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border-[1.5px] transition-all duration-150 ${
-                      mDone ? 'border-[#5F7F67] bg-[#5F7F67]' : 'border-[#D2CBBC] bg-transparent'
+                      mDone
+                        ? 'border-[#5F7F67] dark:border-[#80A789] bg-[#5F7F67] dark:bg-[#80A789]'
+                        : 'border-[#D2CBBC] dark:border-[#46413A] bg-transparent'
                     }`}
                   >
                     {mDone && <Check className="h-[11px] w-[11px] text-white" strokeWidth={2.8} />}
                   </span>
-                  <span className="flex h-[30px] w-[30px] flex-shrink-0 items-center justify-center rounded-full bg-[#EFEADF] font-['Newsreader'] text-[14px] text-[#6F6A60]">
+                  <span className="flex h-[30px] w-[30px] flex-shrink-0 items-center justify-center rounded-full bg-[#EFEADF] dark:bg-[#2A2620] font-['Newsreader'] text-[14px] text-[#6F6A60] dark:text-[#A39C8E]">
                     {m.initial}
                   </span>
                   <span className="min-w-0 flex-1">
                     <span
                       className={`block font-['Newsreader'] text-[14px] ${
-                        mDone ? 'text-[#9A958A] line-through' : 'text-[#26241F]'
+                        mDone
+                          ? 'text-[#9A958A] dark:text-[#827C70] line-through'
+                          : 'text-[#26241F] dark:text-[#ECE7DD]'
                       }`}
                     >
                       {m.name}
                     </span>
                     {m.sub && (
-                      <span className="mt-[1px] block text-[11.5px] text-[#A39E92]">{m.sub}</span>
+                      <span className="mt-[1px] block text-[11.5px] text-[#A39E92] dark:text-[#6E685D]">{m.sub}</span>
                     )}
                   </span>
                 </button>
@@ -152,7 +143,7 @@ export default function GroupAccordion({
               <button
                 type="button"
                 onClick={completeGroup}
-                className="w-full rounded-xl border border-[#CADBCB] bg-[#EEF3EC] py-[10px] text-center font-['Newsreader'] text-[14px] text-[#5F7F67]"
+                className="w-full rounded-xl border border-[#CADBCB] dark:border-[#33473A] bg-[#EEF3EC] dark:bg-[#1B2620] py-[10px] text-center font-['Newsreader'] text-[14px] text-[#5F7F67] dark:text-[#80A789]"
               >
                 Check off the whole group
               </button>

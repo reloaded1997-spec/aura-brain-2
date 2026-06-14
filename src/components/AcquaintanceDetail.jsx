@@ -36,14 +36,14 @@ export default function AcquaintanceDetail({
   }
 
   return (
-    <div className="min-h-full bg-[#FAF8F3] pb-8">
+    <div className="min-h-full bg-[#FAF8F3] dark:bg-[#171511] pb-8">
       {/* Header */}
       <div className="px-[22px] pt-14 pb-[18px]">
         <div className="mb-[18px] flex items-center justify-between">
           <button
             type="button"
             onClick={onBack}
-            className="flex items-center gap-[6px] text-[13px] text-[#9A958A]"
+            className="flex items-center gap-[6px] text-[13px] text-[#9A958A] dark:text-[#827C70]"
           >
             <ChevronLeft className="h-[14px] w-[14px]" strokeWidth={2} />
             <span>Back</span>
@@ -52,7 +52,7 @@ export default function AcquaintanceDetail({
             <button
               type="button"
               onClick={onEdit}
-              className="flex items-center gap-[6px] rounded-full border border-[#E2DCD0] bg-white px-[11px] py-[5px] text-[12px] text-[#6F6A60] transition-colors hover:border-[#D8B98E] hover:text-[#A8845C]"
+              className="flex items-center gap-[6px] rounded-full border border-[#E2DCD0] dark:border-[#302C25] bg-white dark:bg-[#221F1B] px-[11px] py-[5px] text-[12px] text-[#6F6A60] dark:text-[#A39C8E] transition-colors hover:border-[#D8B98E] hover:text-[#A8845C]"
             >
               <Pencil className="h-[13px] w-[13px]" strokeWidth={1.8} />
               Edit
@@ -61,28 +61,28 @@ export default function AcquaintanceDetail({
         </div>
 
         <div className="flex items-center gap-[15px]">
-          <div className="flex h-[62px] w-[62px] flex-shrink-0 items-center justify-center rounded-full bg-[#ECE7DB] font-['Newsreader'] text-[28px] text-[#6F6A60]">
+          <div className="flex h-[62px] w-[62px] flex-shrink-0 items-center justify-center rounded-full bg-[#ECE7DB] dark:bg-[#2C2820] font-['Newsreader'] text-[28px] text-[#6F6A60] dark:text-[#A39C8E]">
             {initial}
           </div>
           <div className="min-w-0">
-            <div className="font-['Newsreader'] text-[29px] leading-[1.05] text-[#1F1D18]">{name}</div>
-            {descriptor && <div className="mt-[3px] text-[13px] text-[#6F6A60]">{descriptor}</div>}
+            <div className="font-['Newsreader'] text-[29px] leading-[1.05] text-[#1F1D18] dark:text-[#F1EDE5]">{name}</div>
+            {descriptor && <div className="mt-[3px] text-[13px] text-[#6F6A60] dark:text-[#A39C8E]">{descriptor}</div>}
           </div>
         </div>
 
         {/* Pills */}
         <div className="mt-4 flex flex-wrap gap-2">
           {inQueue ? (
-            <span className="rounded-full border border-[#E2D3BE] bg-[#FBF4E9] px-[11px] py-[5px] text-[11px] font-semibold text-[#A8845C]">
+            <span className="rounded-full border border-[#E2D3BE] dark:border-[#4A3A28] bg-[#FBF4E9] dark:bg-[#2A211A] px-[11px] py-[5px] text-[11px] font-semibold text-[#A8845C] dark:text-[#C49A6C]">
               IN QUEUE · every {priorityRate} days
             </span>
           ) : (
-            <span className="rounded-full border border-[#E2DCD0] bg-white px-[11px] py-[5px] text-[11px] text-[#9A958A]">
+            <span className="rounded-full border border-[#E2DCD0] dark:border-[#302C25] bg-white dark:bg-[#221F1B] px-[11px] py-[5px] text-[11px] text-[#9A958A] dark:text-[#827C70]">
               Not in queue
             </span>
           )}
           {inQueue && lastClearedDate && (
-            <span className="rounded-full border border-[#E2DCD0] bg-white px-[11px] py-[5px] text-[11px] text-[#6F6A60]">
+            <span className="rounded-full border border-[#E2DCD0] dark:border-[#302C25] bg-white dark:bg-[#221F1B] px-[11px] py-[5px] text-[11px] text-[#6F6A60] dark:text-[#A39C8E]">
               Last cleared {lastClearedDate}
             </span>
           )}
@@ -91,14 +91,14 @@ export default function AcquaintanceDetail({
 
       {/* Updates */}
       <div className="px-4 pt-2">
-        <div className="mx-1 mb-[9px] text-[10px] font-semibold uppercase tracking-[1.8px] text-[#9A958A]">
+        <div className="mx-1 mb-[9px] text-[10px] font-semibold uppercase tracking-[1.8px] text-[#9A958A] dark:text-[#827C70]">
           Updates
         </div>
 
         {/* Add update input */}
-        <div className="mb-3 overflow-hidden rounded-[20px] border border-[#EBE6DC] bg-white shadow-[0_1px_2px_rgba(40,36,31,0.03)]">
+        <div className="mb-3 overflow-hidden rounded-[20px] border border-[#EBE6DC] dark:border-[#322E27] bg-white dark:bg-[#221F1B] shadow-[0_1px_2px_rgba(40,36,31,0.03)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.32)]">
           <form onSubmit={submitUpdate} className="flex items-center gap-3 px-[15px] py-[13px]">
-            <span className="flex h-[22px] w-[22px] flex-shrink-0 items-center justify-center rounded-full border-[1.5px] border-dashed border-[#D2CBBC] text-[#C3BCAD]">
+            <span className="flex h-[22px] w-[22px] flex-shrink-0 items-center justify-center rounded-full border-[1.5px] border-dashed border-[#D2CBBC] dark:border-[#46413A] text-[#C3BCAD] dark:text-[#544E45]">
               <Plus className="h-[13px] w-[13px]" strokeWidth={2} />
             </span>
             <input
@@ -106,7 +106,7 @@ export default function AcquaintanceDetail({
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               placeholder="Add an update"
-              className="flex-1 bg-transparent font-['Newsreader'] text-[14px] italic text-[#3A372F] placeholder:text-[#B0AB9E] focus:outline-none"
+              className="flex-1 bg-transparent font-['Newsreader'] text-[14px] italic text-[#3A372F] dark:text-[#D6D1C6] placeholder:text-[#B0AB9E] dark:placeholder:text-[#6E685D] focus:outline-none"
             />
           </form>
         </div>
@@ -118,19 +118,19 @@ export default function AcquaintanceDetail({
             return (
               <div key={entry.id} className="flex gap-[13px] px-1 pb-4">
                 <div className="flex flex-shrink-0 flex-col items-center">
-                  <span className="mt-[5px] h-[9px] w-[9px] rounded-full bg-[#D7CFBF]" />
-                  {!last && <span className="mt-[3px] w-px flex-1 bg-[#E6E0D4]" />}
+                  <span className="mt-[5px] h-[9px] w-[9px] rounded-full bg-[#D7CFBF] dark:bg-[#3A352C]" />
+                  {!last && <span className="mt-[3px] w-px flex-1 bg-[#E6E0D4] dark:bg-[#302C25]" />}
                 </div>
                 <div>
-                  <div className="text-[12px] text-[#9A958A]">{formatUpdateDate(entry.timestamp)}</div>
-                  <div className="mt-[5px] text-[14.5px] leading-[1.5] text-[#3A372F]">{entry.text}</div>
+                  <div className="text-[12px] text-[#9A958A] dark:text-[#827C70]">{formatUpdateDate(entry.timestamp)}</div>
+                  <div className="mt-[5px] text-[14.5px] leading-[1.5] text-[#3A372F] dark:text-[#D6D1C6]">{entry.text}</div>
                 </div>
               </div>
             );
           })}
 
           {updates.length === 0 && (
-            <div className="px-1 py-2 font-['Newsreader'] text-[14px] italic text-[#B6B0A2]">
+            <div className="px-1 py-2 font-['Newsreader'] text-[14px] italic text-[#B6B0A2] dark:text-[#6A645A]">
               No updates yet.
             </div>
           )}
@@ -139,27 +139,27 @@ export default function AcquaintanceDetail({
 
       {/* Connections */}
       <div className="px-4 pt-4">
-        <div className="mx-1 mb-[9px] text-[10px] font-semibold uppercase tracking-[1.8px] text-[#9A958A]">
+        <div className="mx-1 mb-[9px] text-[10px] font-semibold uppercase tracking-[1.8px] text-[#9A958A] dark:text-[#827C70]">
           Connections
         </div>
         {connections.length > 0 ? (
-          <div className="overflow-hidden rounded-[18px] border border-[#EBE6DC] bg-white">
+          <div className="overflow-hidden rounded-[18px] border border-[#EBE6DC] dark:border-[#322E27] bg-white dark:bg-[#221F1B]">
             {connections.map((c) => (
               <button
                 key={c.id}
                 type="button"
                 onClick={() => onOpenConnection(c.id)}
-                className="flex w-full items-center gap-3 border-b border-[#F1ECE2] px-4 py-3 text-left last:border-b-0"
+                className="flex w-full items-center gap-3 border-b border-[#F1ECE2] dark:border-[#272320] px-4 py-3 text-left last:border-b-0"
               >
-                <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#EFEADF] font-['Newsreader'] text-[14px] text-[#6F6A60]">
+                <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#EFEADF] dark:bg-[#2A2620] font-['Newsreader'] text-[14px] text-[#6F6A60] dark:text-[#A39C8E]">
                   {c.initial}
                 </span>
-                <span className="font-['Newsreader'] text-[15px] text-[#26241F]">{c.name}</span>
+                <span className="font-['Newsreader'] text-[15px] text-[#26241F] dark:text-[#ECE7DD]">{c.name}</span>
               </button>
             ))}
           </div>
         ) : (
-          <div className="px-1 py-2 font-['Newsreader'] text-[14px] italic text-[#B6B0A2]">
+          <div className="px-1 py-2 font-['Newsreader'] text-[14px] italic text-[#B6B0A2] dark:text-[#6A645A]">
             No connections yet.
           </div>
         )}

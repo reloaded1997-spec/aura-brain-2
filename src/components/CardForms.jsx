@@ -19,15 +19,15 @@ import { Plus, Check } from 'lucide-react';
 import { PRIORITY_RATES, priorityLabelFromRate, initialOf } from '../utils/display';
 
 export const fieldCls =
-  'w-full rounded-lg border border-[#E2DCD0] bg-white px-3 py-2 text-[14px] text-[#26241F] placeholder:text-[#B0AB9E] focus:border-[#A8845C] focus:outline-none focus:ring-1 focus:ring-[#D8B98E]';
+  'w-full rounded-lg border border-[#E2DCD0] dark:border-[#302C25] bg-white dark:bg-[#171511] px-3 py-2 text-[14px] text-[#26241F] dark:text-[#ECE7DD] placeholder:text-[#B0AB9E] dark:placeholder:text-[#6E685D] focus:border-[#A8845C] focus:outline-none focus:ring-1 focus:ring-[#D8B98E]';
 export const labelCls =
-  'mb-1 block text-[11px] font-semibold uppercase tracking-[1px] text-[#9A958A]';
+  'mb-1 block text-[11px] font-semibold uppercase tracking-[1px] text-[#9A958A] dark:text-[#827C70]';
 
 function SubmitButton({ mode, children }) {
   return (
     <button
       type="submit"
-      className="mt-1 flex w-full items-center justify-center gap-2 rounded-lg bg-[#A8845C] py-2.5 font-['Newsreader'] text-[15px] text-white transition-colors hover:bg-[#9a774f]"
+      className="mt-1 flex w-full items-center justify-center gap-2 rounded-lg bg-[#A8845C] dark:bg-[#C49A6C] py-2.5 font-['Newsreader'] text-[15px] text-white transition-colors hover:bg-[#9a774f] dark:hover:bg-[#b38a5e]"
     >
       {mode === 'create' ? <Plus className="h-4 w-4" strokeWidth={2} /> : <Check className="h-4 w-4" strokeWidth={2} />}
       {children}
@@ -206,7 +206,7 @@ export function AcquaintanceForm({ profiles = [], mode = 'create', initial = nul
             onChange={(e) => setInQueue(e.target.checked)}
             className="h-4 w-4 accent-[#A8845C]"
           />
-          <span className="text-[13px] text-[#6F6A60]">Surface in Daily Queue</span>
+          <span className="text-[13px] text-[#6F6A60] dark:text-[#A39C8E]">Surface in Daily Queue</span>
         </label>
       </div>
       {inQueue && (
@@ -218,7 +218,7 @@ export function AcquaintanceForm({ profiles = [], mode = 'create', initial = nul
       {people.length > 0 && (
         <div>
           <label className={labelCls}>Connections (People)</label>
-          <div className="rounded-lg border border-[#E2DCD0] bg-white px-3 py-2 flex flex-col gap-1 max-h-40 overflow-y-auto">
+          <div className="rounded-lg border border-[#E2DCD0] dark:border-[#302C25] bg-white dark:bg-[#171511] px-3 py-2 flex flex-col gap-1 max-h-40 overflow-y-auto">
             {people.map((p) => (
               <label key={p.id} className="flex cursor-pointer items-center gap-2 py-[3px]">
                 <input
@@ -227,10 +227,10 @@ export function AcquaintanceForm({ profiles = [], mode = 'create', initial = nul
                   onChange={() => toggleLink(p.id)}
                   className="h-4 w-4 accent-[#A8845C]"
                 />
-                <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#EFEADF] font-['Newsreader'] text-[11px] text-[#6F6A60]">
+                <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#EFEADF] dark:bg-[#2A2620] font-['Newsreader'] text-[11px] text-[#6F6A60] dark:text-[#A39C8E]">
                   {initialOf(p.name)}
                 </span>
-                <span className="text-[13px] text-[#26241F]">{p.name}</span>
+                <span className="text-[13px] text-[#26241F] dark:text-[#ECE7DD]">{p.name}</span>
               </label>
             ))}
           </div>

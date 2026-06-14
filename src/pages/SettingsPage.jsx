@@ -33,7 +33,7 @@ function Toggle({ checked, onChange }) {
       aria-checked={checked}
       onClick={() => onChange(!checked)}
       className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors duration-200 focus:outline-none ${
-        checked ? 'bg-[#5F7F67]' : 'bg-[#D7CFBF]'
+        checked ? 'bg-[#5F7F67] dark:bg-[#80A789]' : 'bg-[#D7CFBF] dark:bg-[#3C3730]'
       }`}
     >
       <span
@@ -47,10 +47,10 @@ function Toggle({ checked, onChange }) {
 
 function Row({ label, sub, children }) {
   return (
-    <div className="flex items-center justify-between gap-4 border-b border-[#F1ECE2] px-[15px] py-[14px] last:border-b-0">
+    <div className="flex items-center justify-between gap-4 border-b border-[#F1ECE2] dark:border-[#272320] px-[15px] py-[14px] last:border-b-0">
       <div className="min-w-0">
-        <div className="font-['Newsreader'] text-[15px] text-[#26241F]">{label}</div>
-        {sub && <div className="mt-[2px] text-[12px] text-[#9A958A]">{sub}</div>}
+        <div className="font-['Newsreader'] text-[15px] text-[#26241F] dark:text-[#ECE7DD]">{label}</div>
+        {sub && <div className="mt-[2px] text-[12px] text-[#9A958A] dark:text-[#827C70]">{sub}</div>}
       </div>
       <div className="flex-shrink-0">{children}</div>
     </div>
@@ -61,11 +61,11 @@ function Section({ title, children }) {
   return (
     <div className="mb-5">
       {title && (
-        <div className="mx-1 mb-[9px] text-[10px] font-semibold uppercase tracking-[1.8px] text-[#9A958A]">
+        <div className="mx-1 mb-[9px] text-[10px] font-semibold uppercase tracking-[1.8px] text-[#9A958A] dark:text-[#827C70]">
           {title}
         </div>
       )}
-      <div className="overflow-hidden rounded-[20px] border border-[#EBE6DC] bg-white shadow-[0_1px_2px_rgba(40,36,31,0.03)]">
+      <div className="overflow-hidden rounded-[20px] border border-[#EBE6DC] dark:border-[#322E27] bg-white dark:bg-[#221F1B] shadow-[0_1px_2px_rgba(40,36,31,0.03)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.32)]">
         {children}
       </div>
     </div>
@@ -73,10 +73,10 @@ function Section({ title, children }) {
 }
 
 const fieldCls =
-  'w-full rounded-lg border border-[#E2DCD0] bg-[#FAF8F3] px-3 py-2 text-[14px] text-[#26241F] placeholder:text-[#B0AB9E] focus:border-[#A8845C] focus:outline-none focus:ring-1 focus:ring-[#D8B98E]';
+  'w-full rounded-lg border border-[#E2DCD0] dark:border-[#302C25] bg-[#FAF8F3] dark:bg-[#171511] px-3 py-2 text-[14px] text-[#26241F] dark:text-[#ECE7DD] placeholder:text-[#B0AB9E] dark:placeholder:text-[#6E685D] focus:border-[#A8845C] focus:outline-none focus:ring-1 focus:ring-[#D8B98E]';
 
 const selectCls =
-  'rounded-lg border border-[#E2DCD0] bg-[#FAF8F3] px-3 py-2 text-[14px] text-[#26241F] focus:border-[#A8845C] focus:outline-none focus:ring-1 focus:ring-[#D8B98E]';
+  'rounded-lg border border-[#E2DCD0] dark:border-[#302C25] bg-[#FAF8F3] dark:bg-[#171511] px-3 py-2 text-[14px] text-[#26241F] dark:text-[#ECE7DD] focus:border-[#A8845C] focus:outline-none focus:ring-1 focus:ring-[#D8B98E]';
 
 // ---- Main component ---------------------------------------------------------
 
@@ -93,6 +93,7 @@ export default function SettingsPage() {
   const [eveningTime, setEveningTime]                   = useState(settings.eveningReminderTime);
   const [showAnswered, setShowAnswered]                 = useState(settings.showAnswered);
   const [fontScale, setFontScale]                       = useState(settings.fontScale);
+  const [darkMode, setDarkMode]                         = useState(settings.darkMode);
   const [notifError, setNotifError]                     = useState('');
 
   // Sync local state if userDoc loads after mount (offline → online transition).
@@ -103,6 +104,7 @@ export default function SettingsPage() {
   useEffect(() => { setEveningTime(settings.eveningReminderTime); },   [settings.eveningReminderTime]);
   useEffect(() => { setShowAnswered(settings.showAnswered); },         [settings.showAnswered]);
   useEffect(() => { setFontScale(settings.fontScale); },              [settings.fontScale]);
+  useEffect(() => { setDarkMode(settings.darkMode); },                [settings.darkMode]);
 
   // ---- Handlers ----
 
@@ -152,6 +154,19 @@ export default function SettingsPage() {
     applyFontScale(next);
   }
 
+  function handleDarkModeToggle(next) {
+    setDarkMode(next);
+    saveSettingNow('darkMode', next);
+    // Apply immediately (DarkModeApplier in App also fires, but this is instant)
+    if (next) {
+      document.documentElement.classList.add('dark');
+      try { localStorage.setItem('aura-dark', '1'); } catch (e) {}
+    } else {
+      document.documentElement.classList.remove('dark');
+      try { localStorage.setItem('aura-dark', '0'); } catch (e) {}
+    }
+  }
+
   async function handleSignOut() {
     await logout();
     navigate('/auth', { replace: true });
@@ -163,18 +178,18 @@ export default function SettingsPage() {
     : null;
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#FAF8F3] text-[#26241F]">
+    <div className="flex min-h-screen flex-col bg-[#FAF8F3] dark:bg-[#171511] text-[#26241F] dark:text-[#ECE7DD]">
       {/* Header */}
       <div className="px-[22px] pt-14 pb-4">
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="mb-5 flex items-center gap-[6px] text-[13px] text-[#9A958A]"
+          className="mb-5 flex items-center gap-[6px] text-[13px] text-[#9A958A] dark:text-[#827C70]"
         >
           <ChevronLeft className="h-[14px] w-[14px]" strokeWidth={2} />
           Back
         </button>
-        <div className="font-['Newsreader'] text-[32px] leading-[1.05] text-[#1F1D18]">
+        <div className="font-['Newsreader'] text-[32px] leading-[1.05] text-[#1F1D18] dark:text-[#F1EDE5]">
           Settings
         </div>
       </div>
@@ -184,12 +199,12 @@ export default function SettingsPage() {
         <Section title="Account">
           {user?.email && (
             <Row label="Email">
-              <span className="text-[13px] text-[#9A958A]">{user.email}</span>
+              <span className="text-[13px] text-[#9A958A] dark:text-[#827C70]">{user.email}</span>
             </Row>
           )}
           {memberSince && (
             <Row label="Member since">
-              <span className="text-[13px] text-[#9A958A]">{memberSince}</span>
+              <span className="text-[13px] text-[#9A958A] dark:text-[#827C70]">{memberSince}</span>
             </Row>
           )}
         </Section>
@@ -197,7 +212,7 @@ export default function SettingsPage() {
         {/* Profile */}
         <Section title="Profile">
           <div className="px-[15px] py-[14px]">
-            <div className="mb-[6px] text-[11px] font-semibold uppercase tracking-[1px] text-[#9A958A]">
+            <div className="mb-[6px] text-[11px] font-semibold uppercase tracking-[1px] text-[#9A958A] dark:text-[#827C70]">
               Display name
             </div>
             <input
@@ -207,7 +222,7 @@ export default function SettingsPage() {
               onChange={handleDisplayNameChange}
               placeholder="How you want to be greeted"
             />
-            <div className="mt-[6px] text-[11px] text-[#B0AB9E]">
+            <div className="mt-[6px] text-[11px] text-[#B0AB9E] dark:text-[#6E685D]">
               Shown in the daily greeting if set.
             </div>
           </div>
@@ -231,6 +246,9 @@ export default function SettingsPage() {
 
         {/* Display */}
         <Section title="Display">
+          <Row label="Dark mode" sub="Warm ink theme for low-light reading.">
+            <Toggle checked={!!darkMode} onChange={handleDarkModeToggle} />
+          </Row>
           <Row label="Show answered prayers" sub="Reveals completed requests on profile pages.">
             <Toggle checked={showAnswered} onChange={handleShowAnsweredToggle} />
           </Row>
@@ -249,7 +267,7 @@ export default function SettingsPage() {
             <Toggle checked={notificationsEnabled} onChange={handleMorningToggle} />
           </Row>
           {notifError && (
-            <div className="border-b border-[#F1ECE2] px-[15px] pb-[12px] text-[12px]" style={{ color: '#B4502F' }}>
+            <div className="border-b border-[#F1ECE2] dark:border-[#272320] px-[15px] pb-[12px] text-[12px]" style={{ color: '#B4502F' }}>
               {notifError}
             </div>
           )}
@@ -257,8 +275,8 @@ export default function SettingsPage() {
             <Toggle checked={eveningEnabled} onChange={handleEveningToggle} />
           </Row>
           {eveningEnabled && (
-            <div className="border-b border-[#F1ECE2] px-[15px] py-[12px] last:border-b-0">
-              <div className="mb-[6px] text-[11px] font-semibold uppercase tracking-[1px] text-[#9A958A]">
+            <div className="border-b border-[#F1ECE2] dark:border-[#272320] px-[15px] py-[12px] last:border-b-0">
+              <div className="mb-[6px] text-[11px] font-semibold uppercase tracking-[1px] text-[#9A958A] dark:text-[#827C70]">
                 Reminder time
               </div>
               <input
