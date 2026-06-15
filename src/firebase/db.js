@@ -24,6 +24,7 @@ import {
   writeBatch,
   arrayUnion,
   arrayRemove,
+  increment,
 } from 'firebase/firestore';
 import { db } from './config';
 import { getTodayLocal, daysBetween } from '../utils/queueMath';
@@ -124,6 +125,25 @@ export function addProfile(uid, { name, descriptor = '', kind = 'person', priori
   });
 }
 
+export function bulkAddProfiles(uid, items, { priorityRate = 7, groupId = null } = {}) {
+  const batch = writeBatch(db);
+  for (const { name, descriptor = '' } of items) {
+    const ref = doc(collection(db, 'profiles'));
+    batch.set(ref, {
+      uid,
+      name,
+      descriptor,
+      kind: 'person',
+      priorityRate: Number(priorityRate),
+      groupId: groupId || null,
+      lastClearedDate: null,
+      openRequestCount: 0,
+      createdAt: serverTimestamp(),
+    });
+  }
+  return batch.commit();
+}
+
 export function updateProfile(profileId, patch) {
   return updateDoc(doc(db, 'profiles', profileId), normalizeProfilePatch(patch));
 }
@@ -153,6 +173,11 @@ export function clearProfile(profileId) {
   return updateDoc(doc(db, 'profiles', profileId), { lastClearedDate: getTodayLocal() });
 }
 
+// Manually surface a profile in today's queue regardless of cadence.
+export function pullProfileToQueue(profileId) {
+  return updateDoc(doc(db, 'profiles', profileId), { pulledForDate: getTodayLocal() });
+}
+
 // ----- Groups ----------------------------------------------------------------
 export function addGroup(uid, { name, descriptor = '', priorityRate = 7 }) {
   return addDoc(collection(db, 'groups'), {
@@ -167,6 +192,11 @@ export function addGroup(uid, { name, descriptor = '', priorityRate = 7 }) {
 
 export function updateGroup(groupId, patch) {
   return updateDoc(doc(db, 'groups', groupId), normalizeGroupPatch(patch));
+}
+
+// Manually surface a group in today's queue regardless of cadence.
+export function pullGroupToQueue(groupId) {
+  return updateDoc(doc(db, 'groups', groupId), { pulledForDate: getTodayLocal() });
 }
 
 // Delete a group WITHOUT deleting its people. Members are detached (groupId ->
@@ -278,12 +308,7 @@ export async function toggleRequest(profileId, requestId, isCompleted) {
 // Keep a denormalized open-request count on the profile so the queue card can
 // show "· N requests" without subscribing to every subcollection.
 function bumpOpenRequests(profileId, delta) {
-  // Read-modify-write would race; a transaction is cleaner, but for a single
-  // user's own device the optimistic increment via updateDoc + FieldValue is
-  // simplest. We import increment lazily to keep the top tidy.
-  return import('firebase/firestore').then(({ increment }) =>
-    updateDoc(doc(db, 'profiles', profileId), { openRequestCount: increment(delta) })
-  );
+  return updateDoc(doc(db, 'profiles', profileId), { openRequestCount: increment(delta) });
 }
 
 // ----- Logs subcollection (profiles/{id}/logs) ------------------------------
@@ -330,12 +355,46 @@ export function addAcquaintance(uid, { name, descriptor = '', inQueue = false, p
   });
 }
 
+export function bulkAddAcquaintances(uid, items, { inQueue = false, priorityRate = 7 } = {}) {
+  const batch = writeBatch(db);
+  for (const { name, descriptor = '' } of items) {
+    const ref = doc(collection(db, 'acquaintances'));
+    batch.set(ref, {
+      uid,
+      name,
+      descriptor,
+      inQueue: Boolean(inQueue),
+      priorityRate: Number(priorityRate),
+      linkedProfileIds: [],
+      lastClearedDate: null,
+      createdAt: serverTimestamp(),
+    });
+  }
+  return batch.commit();
+}
+
 export function updateAcquaintance(acqId, patch) {
   return updateDoc(doc(db, 'acquaintances', acqId), normalizeAcquaintancePatch(patch));
 }
 
 export function clearAcquaintance(acqId) {
   return updateDoc(doc(db, 'acquaintances', acqId), { lastClearedDate: getTodayLocal() });
+}
+
+// Manually surface an acquaintance in today's queue regardless of inQueue/cadence.
+export function pullAcquaintanceToQueue(acqId) {
+  return updateDoc(doc(db, 'acquaintances', acqId), { pulledForDate: getTodayLocal() });
+}
+
+// Pull up to ~3 entities in one batched write (profiles, groups, acquaintances mixed).
+export function pullManyToQueue(items) {
+  const today = getTodayLocal();
+  const batch = writeBatch(db);
+  for (const { entity, id } of items) {
+    const collName = entity === 'group' ? 'groups' : entity === 'acquaintance' ? 'acquaintances' : 'profiles';
+    batch.update(doc(db, collName, id), { pulledForDate: today });
+  }
+  return batch.commit();
 }
 
 export async function deleteAcquaintance(acqId) {
@@ -392,9 +451,16 @@ export function deleteGoal(goalId) {
 }
 
 // ----- Journals --------------------------------------------------------------
-// Writing a journal doc triggers the Cloud Function, which routes the note to
-// the people/groups it recognizes (§6). The client only writes the raw entry.
-export function addJournalEntry(uid, text) {
+// Writing a journal doc triggers routeJournalEntry. When gated:true, the
+// trigger routes ONLY to the confirmed IDs/requests/habits; it skips Gemini
+// entirely. Legacy docs (no gated field) continue to auto-route via Gemini.
+export function addJournalEntry(uid, {
+  text,
+  confirmedProfileIds = [],
+  confirmedGroupIds = [],
+  confirmedRequests = [],
+  confirmedHabits = [],
+} = {}) {
   return addDoc(collection(db, 'journals'), {
     uid,
     text,
@@ -402,7 +468,77 @@ export function addJournalEntry(uid, text) {
     aiProcessed: false,
     linkedProfileIds: [],
     linkedHabitIds: [],
+    gated: true,
+    confirmedProfileIds,
+    confirmedGroupIds,
+    confirmedRequests,
+    confirmedHabits,
   });
+}
+
+// Cascade-delete a journal entry:
+//   • queries each linked profile's requests and logs subcollections for docs
+//     stamped with this journalId and removes them;
+//   • decrements openRequestCount only for OPEN (not yet completed) requests
+//     (completed ones were already decremented when they were answered);
+//   • queries each linked habit's logs subcollection and removes those docs;
+//   • finally deletes the journal doc itself.
+// Batches are chunked at 500 ops to respect Firestore limits.
+export async function deleteJournalEntry(entry) {
+  const { id: journalId, linkedProfileIds = [], linkedHabitIds = [] } = entry;
+
+  // Collect everything that needs to be deleted / updated.
+  const deleteRefs = [];
+  const profileDecrements = []; // { ref, amount }
+
+  for (const profileId of linkedProfileIds) {
+    const profileRef = doc(db, 'profiles', profileId);
+
+    const [reqSnap, logSnap] = await Promise.all([
+      getDocs(query(collection(db, 'profiles', profileId, 'requests'), where('journalId', '==', journalId))),
+      getDocs(query(collection(db, 'profiles', profileId, 'logs'), where('journalId', '==', journalId))),
+    ]);
+
+    let openCount = 0;
+    reqSnap.forEach((d) => {
+      if (!d.data().isCompleted) openCount++;
+      deleteRefs.push(d.ref);
+    });
+    logSnap.forEach((d) => deleteRefs.push(d.ref));
+
+    if (openCount > 0) {
+      profileDecrements.push({ ref: profileRef, amount: openCount });
+    }
+  }
+
+  for (const habitId of linkedHabitIds) {
+    const logSnap = await getDocs(
+      query(collection(db, 'habits', habitId, 'logs'), where('journalId', '==', journalId))
+    );
+    logSnap.forEach((d) => deleteRefs.push(d.ref));
+  }
+
+  // Add the journal doc itself.
+  deleteRefs.push(doc(db, 'journals', journalId));
+
+  // Build a flat list of all Firestore operations.
+  const ops = [
+    ...deleteRefs.map((ref) => ({ kind: 'delete', ref })),
+    ...profileDecrements.map(({ ref, amount }) => ({ kind: 'decrement', ref, amount })),
+  ];
+
+  // Commit in chunks of 500 (Firestore batch limit).
+  for (let i = 0; i < ops.length; i += 500) {
+    const batch = writeBatch(db);
+    for (const op of ops.slice(i, i + 500)) {
+      if (op.kind === 'delete') {
+        batch.delete(op.ref);
+      } else {
+        batch.update(op.ref, { openRequestCount: increment(-op.amount) });
+      }
+    }
+    await batch.commit();
+  }
 }
 
 export function watchJournalEntries(uid, cb) {

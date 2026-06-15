@@ -21,6 +21,7 @@
 
 const { onDocumentCreated } = require('firebase-functions/v2/firestore');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
+const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { defineSecret } = require('firebase-functions/params');
 const { initializeApp } = require('firebase-admin/app');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
@@ -335,6 +336,72 @@ exports.sendEveningQueueReminders = onSchedule(
   }
 );
 
+// --- AI suggestion callable --------------------------------------------------
+// Client calls this when the user taps "Suggest with AI" in the journal.
+// Reads only — never writes to Firestore. Returns prayer-request suggestions
+// matched to the user's profiles, and habit suggestions matched to active
+// habits (gated by the same self-reference check as the trigger).
+exports.suggestJournalEntities = onCall(
+  { secrets: [geminiApiKey] },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError('unauthenticated', 'You must be signed in.');
+    }
+    const uid = request.auth.uid; // never trust uid from payload
+    const { text } = request.data;
+    if (!text || typeof text !== 'string' || !text.trim()) {
+      throw new HttpsError('invalid-argument', 'text is required');
+    }
+
+    const [userSnap, profilesSnap, habitsSnap] = await Promise.all([
+      db.collection('users').doc(uid).get(),
+      db.collection('profiles').where('uid', '==', uid).get(),
+      db.collection('habits').where('uid', '==', uid).get(),
+    ]);
+
+    const profiles = profilesSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const habits = habitsSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const activeHabits = habits.filter((h) => h.status === 'active');
+
+    // Same self-reference gate as the trigger — habits are the user's own
+    // practices and only surface when the entry is about the user.
+    const userNames = userNamesOf(userSnap.exists ? userSnap.data() : null);
+    const selfReferenced = hasSelfReference(text, userNames);
+    const habitTitles = selfReferenced ? activeHabits.map((h) => h.title).filter(Boolean) : [];
+
+    const { extractedData, habitUpdates } = await extractWithGemini(
+      text,
+      habitTitles,
+      userNames[0] || ''
+    );
+
+    // Match each extracted person to one of the user's profiles (uid-scoped).
+    const suggestions = extractedData.map((item) => {
+      const matched = matchByName(profiles, item.name);
+      return {
+        name: item.name,
+        request: item.request,
+        matchedProfileId: matched ? matched.id : null,
+        matchedProfileName: matched ? matched.name : null,
+      };
+    });
+
+    // Match each habit reference to one of the user's active habits.
+    const habitSuggestions = (selfReferenced ? habitUpdates : []).map((update) => {
+      const matched = matchByName(activeHabits, update.title, (h) => h.title);
+      return {
+        title: update.title,
+        note: update.note,
+        completed: update.completed,
+        matchedHabitId: matched ? matched.id : null,
+        matchedHabitTitle: matched ? matched.title : null,
+      };
+    });
+
+    return { suggestions, habitSuggestions };
+  }
+);
+
 exports.routeJournalEntry = onDocumentCreated(
   { document: 'journals/{journalId}', secrets: [geminiApiKey] },
   async (event) => {
@@ -353,6 +420,114 @@ exports.routeJournalEntry = onDocumentCreated(
     }
 
     try {
+      // -----------------------------------------------------------------------
+      // GATED PATH — user confirmed their targets in the UI; skip Gemini.
+      // -----------------------------------------------------------------------
+      if (journal.gated === true) {
+        const confirmedProfileIds = Array.isArray(journal.confirmedProfileIds)
+          ? journal.confirmedProfileIds
+          : [];
+        const confirmedRequests = Array.isArray(journal.confirmedRequests)
+          ? journal.confirmedRequests
+          : [];
+        const confirmedHabits = Array.isArray(journal.confirmedHabits)
+          ? journal.confirmedHabits
+          : [];
+
+        const today = getTodayLocal();
+        const linkedProfileIds = new Set();
+        const linkedHabitIds = new Set();
+
+        // Re-fetch profiles and habits with uid filter (isolation).
+        const [profilesSnap, habitsSnap] = await Promise.all([
+          db.collection('profiles').where('uid', '==', uid).get(),
+          db.collection('habits').where('uid', '==', uid).get(),
+        ]);
+        const profiles = profilesSnap.docs.map((d) => ({ id: d.id, ref: d.ref, ...d.data() }));
+        const habits = habitsSnap.docs.map((d) => ({ id: d.id, ref: d.ref, ...d.data() }));
+
+        // --- Route to confirmed profiles ---
+        for (const profileId of confirmedProfileIds) {
+          const profile = profiles.find((p) => p.id === profileId);
+          if (!profile) {
+            console.log(`[${journalId}] confirmed profile ${profileId} not found or not owned`);
+            continue;
+          }
+
+          const profileRef = profile.ref;
+          const stamp = FieldValue.serverTimestamp();
+
+          // Append From-Journal log to the relational log.
+          await profileRef.collection('logs').add({
+            text,
+            timestamp: stamp,
+            fromJournal: true,
+            journalId,
+          });
+
+          // Write any AI-confirmed requests for this profile.
+          const profileRequests = confirmedRequests.filter((r) => r.profileId === profileId);
+          for (const req of profileRequests) {
+            await profileRef.collection('requests').add({
+              text: req.text,
+              isCompleted: false,
+              createdAt: stamp,
+              fromJournal: true,
+              journalId,
+            });
+            await profileRef.update({ openRequestCount: FieldValue.increment(1) });
+          }
+
+          linkedProfileIds.add(profileId);
+        }
+
+        // --- Route to confirmed habits ---
+        for (const confirmedHabit of confirmedHabits) {
+          const habit = habits.find((h) => h.id === confirmedHabit.habitId);
+          if (!habit) {
+            console.log(`[${journalId}] confirmed habit ${confirmedHabit.habitId} not found or not owned`);
+            continue;
+          }
+
+          const habitRef = habit.ref;
+
+          await habitRef.collection('logs').add({
+            text,
+            note: confirmedHabit.note || '',
+            timestamp: FieldValue.serverTimestamp(),
+            fromJournal: true,
+            completed: !!confirmedHabit.completed,
+            journalId,
+          });
+
+          // Bump streak only when the user marked it done AND it isn't already
+          // stamped for today (idempotent — never double-bumps).
+          if (confirmedHabit.completed && habit.lastCompletedDate !== today) {
+            await habitRef.update({
+              lastCompletedDate: today,
+              currentStreak: (habit.currentStreak || 0) + 1,
+            });
+          }
+
+          linkedHabitIds.add(confirmedHabit.habitId);
+        }
+
+        await snap.ref.update({
+          aiProcessed: true,
+          linkedProfileIds: [...linkedProfileIds],
+          linkedHabitIds: [...linkedHabitIds],
+          processedAt: FieldValue.serverTimestamp(),
+        });
+        console.log(
+          `[${journalId}] gated — routed to ${linkedProfileIds.size} profile(s), ${linkedHabitIds.size} habit(s)`
+        );
+        return;
+      }
+
+      // -----------------------------------------------------------------------
+      // LEGACY PATH — no gated field; auto-route via Gemini (backward compat).
+      // -----------------------------------------------------------------------
+
       // 1) Load THIS USER's account doc, profiles AND habits once (uid filter =
       //    isolation). Habit titles are fed to the model so it only flags real
       //    habits; the account doc gives us the user's name for the self gate.

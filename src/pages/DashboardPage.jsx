@@ -12,7 +12,7 @@
 
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ArrowDownToLine } from 'lucide-react';
 import { TopHeader, BottomNav } from '../components/Navigation';
 import HabitStrip from '../components/HabitStrip';
 import DailyNoteStrip from '../components/DailyNoteStrip';
@@ -22,7 +22,7 @@ import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import { useSettings } from '../hooks/useSettings';
 import { addLog, addUpdate } from '../firebase/db';
-import { generateDailyQueue, getTodayLocal } from '../utils/queueMath';
+import { generateDailyQueue, getTodayLocal, nextPullCandidates } from '../utils/queueMath';
 import { decorateProfile, decorateGroup, decorateAcquaintance } from '../utils/display';
 import { initialFor } from '../utils/identity';
 
@@ -43,7 +43,7 @@ function timeOfDayGreeting() {
 
 export default function DashboardPage() {
   const { user, userDoc, logout } = useAuth();
-  const { habits, groups, profiles, acquaintances, loading, clearProfile, clearGroup, clearAcquaintance, toggleHabit } = useData();
+  const { habits, groups, profiles, acquaintances, loading, clearProfile, clearGroup, clearAcquaintance, toggleHabit, pullToQueue } = useData();
   const { settings } = useSettings();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('queue');
@@ -96,10 +96,13 @@ export default function DashboardPage() {
   const remaining = dueGroups.length + dueProfiles.length;
 
   // Progress: cleared-today vs the day's full surfaced set (cleared + due).
+  // For acquaintances, count those in the auto-queue OR manually pulled today.
   const clearedToday =
     profiles.filter((p) => p.lastClearedDate === today).length +
     groups.filter((g) => g.lastClearedDate === today).length +
-    acquaintances.filter((a) => a.inQueue === true && a.lastClearedDate === today).length;
+    acquaintances.filter(
+      (a) => (a.inQueue === true || a.pulledForDate === today) && a.lastClearedDate === today
+    ).length;
   const total = clearedToday + remaining;
 
   // Interleave the group(s) among the people, like the design.
@@ -109,6 +112,34 @@ export default function DashboardPage() {
     if (i === 1) dueGroups.forEach((g) => queueItems.push({ type: 'group', data: g }));
   });
   if (dueProfiles.length < 2) dueGroups.forEach((g) => queueItems.push({ type: 'group', data: g }));
+
+  // --- Pull more candidates -------------------------------------------------
+  const pullCandidates = useMemo(
+    () => nextPullCandidates(profiles, groups, acquaintances, today),
+    [profiles, groups, acquaintances, today]
+  );
+
+  const handlePullMore = () => {
+    if (pullCandidates.length === 0) return;
+    pullToQueue(pullCandidates);
+  };
+
+  // Reusable pull widget — button or quiet caption depending on candidates.
+  const PullWidget = () =>
+    pullCandidates.length > 0 ? (
+      <button
+        type="button"
+        onClick={handlePullMore}
+        className="flex items-center gap-2 rounded-lg border border-[#D8C9B3] dark:border-[#3A3328] px-4 py-2 font-['Newsreader'] text-[14px] text-[#A8845C] dark:text-[#C49A6C] transition-colors hover:bg-[#F1EAE0] dark:hover:bg-[#2A2620]"
+      >
+        <ArrowDownToLine className="h-[15px] w-[15px]" strokeWidth={1.8} />
+        Pull more
+      </button>
+    ) : (
+      <p className="font-['Newsreader'] text-[13px] italic text-[#B6B0A2] dark:text-[#6A645A]">
+        Everyone&rsquo;s surfaced
+      </p>
+    );
 
   return (
     <div className="flex min-h-screen flex-col bg-[#FAF8F3] dark:bg-[#171511] text-[#26241F] dark:text-[#ECE7DD]">
@@ -175,10 +206,23 @@ export default function DashboardPage() {
             )}
 
             {remaining === 0 && (
-              <div className="my-10 text-center font-['Newsreader'] text-[15px] italic text-[#B6B0A2] dark:text-[#6A645A]">
-                {profiles.length === 0
-                  ? 'No one in your network yet — add someone from the Circle tab.'
-                  : 'When the queue is clear, rest.'}
+              <div className="my-10 text-center">
+                <p className="font-['Newsreader'] text-[15px] italic text-[#B6B0A2] dark:text-[#6A645A]">
+                  {profiles.length === 0
+                    ? 'No one in your network yet — add someone from the Circle tab.'
+                    : 'When the queue is clear, rest.'}
+                </p>
+                {profiles.length > 0 && (
+                  <div className="mt-4 flex justify-center">
+                    <PullWidget />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {remaining > 0 && !loading && (
+              <div className="mt-5 flex justify-center">
+                <PullWidget />
               </div>
             )}
           </div>

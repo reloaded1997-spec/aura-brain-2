@@ -10,6 +10,7 @@
 
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
+import { getFunctions } from 'firebase/functions';
 import {
   initializeFirestore,
   persistentLocalCache,
@@ -43,5 +44,8 @@ export const db = initializeFirestore(app, {
     tabManager: persistentMultipleTabManager(),
   }),
 });
+
+// Functions — default region (us-central1), matching the deployed 2nd-gen functions.
+export const functions = getFunctions(app);
 
 export default app;

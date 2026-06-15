@@ -77,12 +77,16 @@ export function DataProvider({ children }) {
       addGoal: (data) => dbApi.addGoal(user.uid, data),
       updateGoal: dbApi.updateGoal,
       deleteGoal: dbApi.deleteGoal,
-      addJournalEntry: (text) => dbApi.addJournalEntry(user.uid, text),
+      addJournalEntry: (payload) => dbApi.addJournalEntry(user.uid, payload),
+      deleteJournalEntry: (entry) => dbApi.deleteJournalEntry(entry),
       updateProfileNotes: dbApi.updateProfileNotes,
       addAcquaintance: (data) => dbApi.addAcquaintance(user.uid, data),
       updateAcquaintance: dbApi.updateAcquaintance,
       deleteAcquaintance: dbApi.deleteAcquaintance,
       clearAcquaintance: dbApi.clearAcquaintance,
+      bulkAddProfiles: (items, opts) => dbApi.bulkAddProfiles(user.uid, items, opts),
+      bulkAddAcquaintances: (items, opts) => dbApi.bulkAddAcquaintances(user.uid, items, opts),
+      pullToQueue: dbApi.pullManyToQueue,
     }),
     [user]
   );

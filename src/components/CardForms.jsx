@@ -14,7 +14,7 @@
 // the hosting modal closes, so no reset is needed.
 // =============================================================================
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Plus, Check } from 'lucide-react';
 import { PRIORITY_RATES, priorityLabelFromRate, initialOf } from '../utils/display';
 
@@ -240,6 +240,295 @@ export function AcquaintanceForm({ profiles = [], mode = 'create', initial = nul
         <p className="text-[13px]" style={{ color: '#B4502F' }}>{submitError}</p>
       )}
       <SubmitButton mode={mode}>{submitLabel || (mode === 'create' ? 'Add acquaintance' : 'Save changes')}</SubmitButton>
+    </form>
+  );
+}
+
+// ---- Relationship (unified create) -----------------------------------------
+// One create form for both Friends (profiles, kind:'person') and Acquaintances.
+// A Friend/Acquaintance toggle swaps the type-specific fields; shared fields
+// (name, descriptor, cycle) persist across the toggle. Create-only — editing
+// still uses the dedicated PersonForm / AcquaintanceForm via EditCardModal.
+//
+// A "Bulk entry" mode toggle lets users paste multiple names at once (one per
+// line, optionally "Name, descriptor"). Type, cycle, and queue settings apply
+// to all pasted entries. The connections picker is hidden in bulk mode since
+// it doesn't scale to multi-entry.
+//
+// Props:
+//   groups              : groups list (Friend group picker)
+//   profiles            : profiles list (Acquaintance connections picker)
+//   defaultPriorityRate : pre-fills the cycle selector for both types
+//   onSubmit            : ({ type, ...payload }) => Promise  — single entry
+//     Friend  payload: { name, descriptor, kind:'person', priorityRate, groupId }
+//     Acq.    payload: { name, descriptor, inQueue, priorityRate, linkedProfileIds }
+//   onBulkSubmit        : ({ type, items, priorityRate, inQueue, groupId }) => Promise
+export function RelationshipForm({ groups = [], profiles = [], defaultPriorityRate = 7, onSubmit, onBulkSubmit }) {
+  const [type, setType] = useState('person'); // 'person' (Friend) | 'acquaintance'
+  const [bulk, setBulk] = useState(false);
+
+  // Single-entry fields
+  const [name, setName] = useState('');
+  const [descriptor, setDescriptor] = useState('');
+  const [priorityRate, setPriorityRate] = useState(defaultPriorityRate);
+  const [groupId, setGroupId] = useState('');
+  const [inQueue, setInQueue] = useState(false);
+  const [linkedProfileIds, setLinkedProfileIds] = useState([]);
+
+  // Bulk-entry fields
+  const [bulkText, setBulkText] = useState('');
+
+  const [submitError, setSubmitError] = useState(null);
+
+  const people = profiles.filter((p) => !p.kind || p.kind === 'person');
+  const isAcq = type === 'acquaintance';
+
+  // Parse textarea: one entry per non-blank line, split on first comma
+  const bulkItems = useMemo(() => {
+    return bulkText
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => {
+        const comma = line.indexOf(',');
+        if (comma === -1) return { name: line, descriptor: '' };
+        return { name: line.slice(0, comma).trim(), descriptor: line.slice(comma + 1).trim() };
+      })
+      .filter((item) => item.name);
+  }, [bulkText]);
+
+  function toggleLink(id) {
+    setLinkedProfileIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  }
+
+  function resetFields() {
+    setName('');
+    setDescriptor('');
+    setPriorityRate(defaultPriorityRate);
+    setGroupId('');
+    setInQueue(false);
+    setLinkedProfileIds([]);
+    setBulkText('');
+  }
+
+  function switchMode(nextBulk) {
+    setBulk(nextBulk);
+    setSubmitError(null);
+  }
+
+  async function submit(e) {
+    e.preventDefault();
+    setSubmitError(null);
+    try {
+      if (bulk) {
+        if (bulkItems.length === 0) return;
+        await onBulkSubmit({ type, items: bulkItems, priorityRate, inQueue, groupId: groupId || null });
+      } else {
+        if (!name.trim()) return;
+        const payload =
+          isAcq
+            ? { type, name: name.trim(), descriptor: descriptor.trim(), inQueue, priorityRate, linkedProfileIds }
+            : { type, name: name.trim(), descriptor: descriptor.trim(), kind: 'person', priorityRate, groupId: groupId || null };
+        await onSubmit(payload);
+      }
+      resetFields();
+    } catch (err) {
+      console.error('[RelationshipForm] submit failed:', err.code, err.message);
+      setSubmitError(err.message || 'Failed to save. Please try again.');
+    }
+  }
+
+  const bulkCount = bulkItems.length;
+  const bulkLabel = isAcq
+    ? bulkCount > 0 ? `Add ${bulkCount} acquaintance${bulkCount === 1 ? '' : 's'}` : 'Add acquaintances'
+    : bulkCount > 0 ? `Add ${bulkCount} friend${bulkCount === 1 ? '' : 's'}` : 'Add friends';
+
+  return (
+    <form onSubmit={submit} className="flex flex-col gap-3">
+      {/* Type toggle + mode switcher */}
+      <div className="flex items-center gap-2">
+        <div className="flex flex-1 gap-1 rounded-xl bg-[#EFEAE0] dark:bg-[#24221C] p-1">
+          {[
+            { k: 'person', label: 'Friend' },
+            { k: 'acquaintance', label: 'Acquaintance' },
+          ].map(({ k, label }) => (
+            <button
+              key={k}
+              type="button"
+              onClick={() => setType(k)}
+              className={`flex-1 rounded-lg py-2 font-['Newsreader'] text-[14px] transition-all ${
+                type === k
+                  ? 'border border-[#E6DFD2] dark:border-[#302C25] bg-white dark:bg-[#221F1B] text-[#26241F] dark:text-[#ECE7DD] shadow-[0_1px_2px_rgba(40,36,31,0.08)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.32)]'
+                  : 'border border-transparent text-[#9A958A] dark:text-[#827C70]'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={() => switchMode(!bulk)}
+          className="flex-shrink-0 rounded-lg border border-[#E2DCD0] dark:border-[#302C25] px-3 py-2 font-['Newsreader'] text-[13px] text-[#9A958A] dark:text-[#827C70] transition-colors hover:border-[#A8845C] hover:text-[#A8845C]"
+        >
+          {bulk ? 'Single' : 'Bulk'}
+        </button>
+      </div>
+
+      {bulk ? (
+        /* ── Bulk mode ─────────────────────────────────────────────────────── */
+        <>
+          <div>
+            <label className={labelCls}>Names — one per line</label>
+            <textarea
+              className={`${fieldCls} min-h-[110px] resize-y leading-relaxed`}
+              value={bulkText}
+              onChange={(e) => setBulkText(e.target.value)}
+              placeholder={'Marcus Bell\nJohn Smith, mentor\nSarah Chen, neighbor from church'}
+            />
+          </div>
+
+          {/* Live preview */}
+          {bulkItems.length > 0 && (
+            <div className="rounded-lg border border-[#E2DCD0] dark:border-[#302C25] bg-[#FAF8F3] dark:bg-[#171511] px-3 py-2 flex flex-col gap-1">
+              {bulkItems.map((item, i) => (
+                <div key={i} className="flex items-baseline gap-2">
+                  <span className="font-['Newsreader'] text-[14px] text-[#26241F] dark:text-[#ECE7DD]">{item.name}</span>
+                  {item.descriptor && (
+                    <span className="text-[12px] text-[#9A958A] dark:text-[#827C70]">{item.descriptor}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Shared settings that apply to all bulk entries */}
+          {isAcq ? (
+            <div className="flex items-center gap-3">
+              <label className="flex cursor-pointer items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={inQueue}
+                  onChange={(e) => setInQueue(e.target.checked)}
+                  className="h-4 w-4 accent-[#A8845C]"
+                />
+                <span className="text-[13px] text-[#6F6A60] dark:text-[#A39C8E]">Surface in Daily Queue</span>
+              </label>
+            </div>
+          ) : null}
+          {(!isAcq || inQueue) && (
+            <div>
+              <label className={labelCls}>Cycle (applies to all)</label>
+              <RateSelect value={priorityRate} onChange={setPriorityRate} />
+            </div>
+          )}
+          {!isAcq && groups.length > 0 && (
+            <div>
+              <label className={labelCls}>Group (optional, applies to all)</label>
+              <select className={fieldCls} value={groupId} onChange={(e) => setGroupId(e.target.value)}>
+                <option value="">— none (standalone) —</option>
+                {groups.map((g) => (
+                  <option key={g.id} value={g.id}>{g.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+        </>
+      ) : (
+        /* ── Single mode ───────────────────────────────────────────────────── */
+        <>
+          <div>
+            <label className={labelCls}>Name</label>
+            <input
+              className={fieldCls}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={isAcq ? "Sarah's brother Mike" : 'Marcus Bell'}
+            />
+          </div>
+          <div>
+            <label className={labelCls}>Descriptor</label>
+            <input
+              className={fieldCls}
+              value={descriptor}
+              onChange={(e) => setDescriptor(e.target.value)}
+              placeholder={isAcq ? "met at the men's retreat" : 'Brother in Christ · job search'}
+            />
+          </div>
+
+          {/* Friend-specific */}
+          {!isAcq && (
+            <>
+              <div>
+                <label className={labelCls}>Cycle</label>
+                <RateSelect value={priorityRate} onChange={setPriorityRate} />
+              </div>
+              {groups.length > 0 && (
+                <div>
+                  <label className={labelCls}>Group (optional)</label>
+                  <select className={fieldCls} value={groupId} onChange={(e) => setGroupId(e.target.value)}>
+                    <option value="">— none (standalone) —</option>
+                    {groups.map((g) => (
+                      <option key={g.id} value={g.id}>{g.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Acquaintance-specific */}
+          {isAcq && (
+            <>
+              <div className="flex items-center gap-3">
+                <label className="flex cursor-pointer items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={inQueue}
+                    onChange={(e) => setInQueue(e.target.checked)}
+                    className="h-4 w-4 accent-[#A8845C]"
+                  />
+                  <span className="text-[13px] text-[#6F6A60] dark:text-[#A39C8E]">Surface in Daily Queue</span>
+                </label>
+              </div>
+              {inQueue && (
+                <div>
+                  <label className={labelCls}>Cycle</label>
+                  <RateSelect value={priorityRate} onChange={setPriorityRate} />
+                </div>
+              )}
+              {people.length > 0 && (
+                <div>
+                  <label className={labelCls}>Connections (People)</label>
+                  <div className="rounded-lg border border-[#E2DCD0] dark:border-[#302C25] bg-white dark:bg-[#171511] px-3 py-2 flex flex-col gap-1 max-h-40 overflow-y-auto">
+                    {people.map((p) => (
+                      <label key={p.id} className="flex cursor-pointer items-center gap-2 py-[3px]">
+                        <input
+                          type="checkbox"
+                          checked={linkedProfileIds.includes(p.id)}
+                          onChange={() => toggleLink(p.id)}
+                          className="h-4 w-4 accent-[#A8845C]"
+                        />
+                        <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#EFEADF] dark:bg-[#2A2620] font-['Newsreader'] text-[11px] text-[#6F6A60] dark:text-[#A39C8E]">
+                          {initialOf(p.name)}
+                        </span>
+                        <span className="text-[13px] text-[#26241F] dark:text-[#ECE7DD]">{p.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </>
+      )}
+
+      {submitError && (
+        <p className="text-[13px]" style={{ color: '#B4502F' }}>{submitError}</p>
+      )}
+      <SubmitButton mode="create">{bulk ? bulkLabel : isAcq ? 'Add acquaintance' : 'Add friend'}</SubmitButton>
     </form>
   );
 }

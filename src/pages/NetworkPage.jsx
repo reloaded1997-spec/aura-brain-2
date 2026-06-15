@@ -11,26 +11,26 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UserPlus, Users, Pencil, Contact } from 'lucide-react';
+import { Users, Pencil, Contact, ChevronDown } from 'lucide-react';
 import { BottomNav, NAV_PATHS } from '../components/Navigation';
-import { PersonForm, GroupForm, AcquaintanceForm } from '../components/CardForms';
+import { GroupForm, RelationshipForm } from '../components/CardForms';
 import EditCardModal from '../components/EditCardModal';
 import { useData } from '../context/DataContext';
 import { useSettings } from '../hooks/useSettings';
 import { priorityLabelFromRate, initialOf } from '../utils/display';
 
 const TABS = [
-  { key: 'person',      label: 'Person',      Icon: UserPlus },
-  { key: 'group',       label: 'Group',        Icon: Users },
-  { key: 'acquaintance', label: 'Acq.',        Icon: Contact },
+  { key: 'relationships', label: 'Relationships', Icon: Contact },
+  { key: 'group',         label: 'Group',         Icon: Users },
 ];
 
 export default function NetworkPage() {
   const navigate = useNavigate();
-  const { profiles, groups, acquaintances, addProfile, addGroup, addAcquaintance } = useData();
+  const { profiles, groups, acquaintances, addProfile, addGroup, addAcquaintance, bulkAddProfiles, bulkAddAcquaintances } = useData();
   const { settings } = useSettings();
-  const [tab, setTab] = useState('person');
+  const [tab, setTab] = useState('relationships');
   const [editing, setEditing] = useState(null);
+  const [formOpen, setFormOpen] = useState(false);
 
   const people = profiles;
 
@@ -47,29 +47,61 @@ export default function NetworkPage() {
       </div>
 
       <main className="flex-1 px-4">
-        {/* Add — segmented control */}
-        <div className="mb-3 flex gap-1 rounded-xl bg-[#EFEAE0] dark:bg-[#24221C] p-1">
-          {TABS.map(({ key, label, Icon }) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setTab(key)}
-              className={`flex flex-1 items-center justify-center gap-[6px] rounded-lg py-2 font-['Newsreader'] text-[14px] transition-all ${
-                tab === key
-                  ? 'border border-[#E6DFD2] dark:border-[#302C25] bg-white dark:bg-[#221F1B] text-[#26241F] dark:text-[#ECE7DD] shadow-[0_1px_2px_rgba(40,36,31,0.08)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.32)]'
-                  : 'border border-transparent text-[#9A958A] dark:text-[#827C70]'
-              }`}
-            >
-              <Icon className="h-[14px] w-[14px]" strokeWidth={1.8} />
-              {label}
-            </button>
-          ))}
-        </div>
+        {/* Add form — collapsible */}
+        <div className="mb-3 overflow-hidden rounded-[18px] border border-[#EBE6DC] dark:border-[#322E27] bg-white dark:bg-[#221F1B] shadow-[0_1px_2px_rgba(40,36,31,0.03)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.32)]">
+          <button
+            type="button"
+            onClick={() => setFormOpen((o) => !o)}
+            className="flex w-full items-center justify-between px-4 py-3 text-left"
+          >
+            <span className="font-['Newsreader'] text-[15px] text-[#26241F] dark:text-[#ECE7DD]">
+              Add person or group
+            </span>
+            <ChevronDown
+              className={`h-4 w-4 text-[#9A958A] dark:text-[#827C70] transition-transform duration-200 ${formOpen ? 'rotate-180' : ''}`}
+              strokeWidth={2}
+            />
+          </button>
 
-        <div className="rounded-[18px] border border-[#EBE6DC] dark:border-[#322E27] bg-white dark:bg-[#221F1B] p-4 shadow-[0_1px_2px_rgba(40,36,31,0.03)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.32)]">
-          {tab === 'person'      && <PersonForm groups={groups} onSubmit={addProfile} defaultPriorityRate={settings.defaultPriorityRate} />}
-          {tab === 'group'       && <GroupForm onSubmit={addGroup} defaultPriorityRate={settings.defaultPriorityRate} />}
-          {tab === 'acquaintance' && <AcquaintanceForm profiles={profiles} onSubmit={addAcquaintance} />}
+          {formOpen && (
+            <div className="border-t border-[#EBE6DC] dark:border-[#322E27] px-4 pb-4 pt-3">
+              {/* Segmented control */}
+              <div className="mb-3 flex gap-1 rounded-xl bg-[#EFEAE0] dark:bg-[#24221C] p-1">
+                {TABS.map(({ key, label, Icon }) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setTab(key)}
+                    className={`flex flex-1 items-center justify-center gap-[6px] rounded-lg py-2 font-['Newsreader'] text-[14px] transition-all ${
+                      tab === key
+                        ? 'border border-[#E6DFD2] dark:border-[#302C25] bg-white dark:bg-[#221F1B] text-[#26241F] dark:text-[#ECE7DD] shadow-[0_1px_2px_rgba(40,36,31,0.08)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.32)]'
+                        : 'border border-transparent text-[#9A958A] dark:text-[#827C70]'
+                    }`}
+                  >
+                    <Icon className="h-[14px] w-[14px]" strokeWidth={1.8} />
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              {tab === 'relationships' && (
+                <RelationshipForm
+                  groups={groups}
+                  profiles={profiles}
+                  defaultPriorityRate={settings.defaultPriorityRate}
+                  onSubmit={({ type, ...data }) =>
+                    type === 'acquaintance' ? addAcquaintance(data) : addProfile(data)
+                  }
+                  onBulkSubmit={({ type, items, priorityRate, inQueue, groupId }) =>
+                    type === 'acquaintance'
+                      ? bulkAddAcquaintances(items, { inQueue, priorityRate })
+                      : bulkAddProfiles(items, { priorityRate, groupId })
+                  }
+                />
+              )}
+              {tab === 'group' && <GroupForm onSubmit={addGroup} defaultPriorityRate={settings.defaultPriorityRate} />}
+            </div>
+          )}
         </div>
 
         {/* Existing groups */}

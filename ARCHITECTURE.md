@@ -40,11 +40,11 @@ The database must be optimized for offline-first capabilities using Firestore's 
 
 *   `users/{uid}`: { email, createdAt, settings, fcmTokens: string[] }
 *   `habits/{habitId}`: { uid, title, type: 'permanent' | 'temporary', targetDate: string | null, currentStreak: number, lastCompletedDate: string, status: 'active' | 'archived_achievement' }
-*   `groups/{groupId}`: { uid, name, priorityRate: number, lastClearedDate: string }
-*   `profiles/{profileId}`: { uid, name, groupId: string | null, priorityRate: number, lastClearedDate: string, notes: string, openRequestCount: number }
+*   `groups/{groupId}`: { uid, name, priorityRate: number, lastClearedDate: string, pulledForDate: string | null }
+*   `profiles/{profileId}`: { uid, name, groupId: string | null, priorityRate: number, lastClearedDate: string, notes: string, openRequestCount: number, pulledForDate: string | null }
     *   *Subcollection:* `requests/{requestId}`: { text, isCompleted: boolean, createdAt }
     *   *Subcollection:* `logs/{logId}`: { text, timestamp }
-*   `acquaintances/{acqId}`: { uid, name, descriptor: string, inQueue: boolean, priorityRate: number, lastClearedDate: string | null, linkedProfileIds: string[], createdAt }
+*   `acquaintances/{acqId}`: { uid, name, descriptor: string, inQueue: boolean, priorityRate: number, lastClearedDate: string | null, linkedProfileIds: string[], createdAt, pulledForDate: string | null }
     *   *Subcollection:* `updates/{updateId}`: { text, timestamp }
     *   *Lighter than a profile:* no requests, no notes field, no `openRequestCount`. The `updates` feed renders newest-first (`orderBy('timestamp','desc')`). Surfaces in the Daily Queue ONLY when `inQueue` is true, on its own `priorityRate`. `linkedProfileIds` ties it to `profiles` and is read in both directions (the acquaintance shows its people; each person shows its acquaintances as "connections").
 *   `journals/{journalId}`: { uid, text, timestamp, aiProcessed: boolean, linkedProfileIds: [] }
@@ -63,7 +63,7 @@ The database must be optimized for offline-first capabilities using Firestore's 
 * **Execution:** Node.js backend uses the `@google/genai` (or `@google/generative-ai`) SDK to send journal text to the Gemini model.
 * **Action:** Gemini extracts mentioned names and derived prayer requests and returns them as a structured JSON object. The Cloud Function parses this JSON and directly mutates the respective `profiles/{profileId}/requests` collections.
 
-## 7. Current Shipped State (as of Phase 2–4)
+## 7. Current Shipped State (as of Phase 2–4 + Pull/Bulk additions)
 These features are complete and live:
 *   Auth with invite-code gating + profile completion prompt
 *   Daily Queue with DST-safe load-balancer math (`src/utils/queueMath.js`)
@@ -73,6 +73,8 @@ These features are complete and live:
 *   Journal → Gemini Cloud Function → auto-populates profile logs
 *   Network view (all profiles/groups), Search (in-memory, instant)
 *   PWA manifest + Workbox service worker, Vercel deployment, Firestore security rules
+*   **"Pull more"**: manual one-day queue surfacing via `pulledForDate` field on profiles/groups/acquaintances; `nextPullCandidates()` ranks by nearest-to-due; `pullManyToQueue()` batched write; persists across reload, auto-expires next day
+*   **Unified Relationships create form**: the Circle tab's create segment collapses to two tabs — **Relationships** and **Group**. `RelationshipForm` (`CardForms.jsx`) carries a Friend/Acquaintance toggle that swaps type-specific fields (Friend → group picker; Acquaintance → queue opt-in + connections) over shared name/descriptor/cycle. Create-only; editing still routes through the dedicated `PersonForm`/`AcquaintanceForm` in `EditCardModal`. "Friend" creates a `profiles` doc with `kind:'person'` (the standalone-request kind is no longer offered at create time)
 
 ## 8. Build Roadmap (Phase 3+)
 This app is being actively extended. New features must fit within the existing architecture without introducing new state management libraries, UI frameworks, or backend providers.
